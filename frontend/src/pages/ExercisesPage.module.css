@@ -1,0 +1,59 @@
+.title {
+  margin-bottom: 1.5rem;
+  color: #000000;
+}
+
+.filterSection {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filterInput {
+  flex: 1;
+  min-width: 200px;
+}
+
+.exerciseList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.exerciseItem {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-left: 4px solid #D16014;
+  border-radius: 4px;
+  transition: transform 0.2s ease;
+}
+
+.exerciseItem:hover {
+  transform: translateX(4px);
+}
+
+.exerciseName {
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+
+.exerciseMuscle {
+  color: #6E8387;
+  font-size: 0.9rem;
+}
+
+.exerciseDescription {
+  margin-top: 0.5rem;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: #6E8387;
+}

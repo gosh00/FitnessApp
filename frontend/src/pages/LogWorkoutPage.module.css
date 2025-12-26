@@ -1,0 +1,106 @@
+.title {
+  margin-bottom: 1.5rem;
+  color: #000000;
+}
+
+.workoutHeader {
+  margin-bottom: 2rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.exerciseBlock {
+  border: 2px solid #6E8387;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #f9f9f9;
+}
+
+.exerciseHeader {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.exerciseSelect {
+  flex: 1;
+  min-width: 200px;
+}
+
+.setRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.setLabel {
+  min-width: 60px;
+  font-weight: 500;
+}
+
+.smallInput {
+  width: 80px;
+}
+
+.smallSelect {
+  width: 70px;
+}
+
+.addButton {
+  background-color: #6E8387;
+  color: #FFFFFC;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: opacity 0.3s ease;
+  margin-top: 0.5rem;
+}
+
+.addButton:hover {
+  opacity: 0.9;
+}
+
+.removeButton {
+  background-color: #D16014;
+  color: #FFFFFC;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: opacity 0.3s ease;
+}
+
+.removeButton:hover {
+  opacity: 0.9;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .setRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .smallInput, .smallSelect {
+    width: 100%;
+  }
+}

@@ -1,0 +1,157 @@
+.title {
+  margin-bottom: 1.5rem;
+  color: #000000;
+}
+
+.workoutCard {
+  border: 2px solid #6E8387;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #FFFFFC;
+}
+
+.workoutHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.workoutName {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.workoutMeta {
+  font-size: 0.85rem;
+  color: #6E8387;
+}
+
+.likesSection {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: #000000;
+}
+
+.workoutInfo {
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: #6E8387;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.commentSection {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.commentItem {
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid #f0f0f0;
+}
+
+.commentAuthor {
+  font-weight: 600;
+  color: #000000;
+}
+
+.commentInput {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.commentInputField {
+  flex: 1;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modalContent {
+  background-color: #FFFFFC;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.modalTitle {
+  margin: 0;
+  color: #000000;
+}
+
+.closeButton {
+  background-color: #D16014;
+  color: #FFFFFC;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.exerciseDetail {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.exerciseDetail:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.exerciseName {
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 0.5rem;
+}
+
+.setsList {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.setItem {
+  padding: 0.25rem 0;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: #6E8387;
+}

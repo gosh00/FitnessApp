@@ -1,8 +1,8 @@
 :root {
   --color-black: #000000;
-  --color-white: #FFFFFC;
-  --color-gray: #6E8387;
-  --color-orange: #D16014;
+  --color-white: #fffffc;
+  --color-gray: #6e8387;
+  --color-orange: #d16014;
 }
 
 /* Shared Card Style */
@@ -31,7 +31,7 @@
   cursor: pointer;
   font-size: 1rem;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
 }
 
 .primaryButton:hover {
@@ -42,6 +42,8 @@
 .primaryButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Secondary Button */
@@ -53,7 +55,7 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease;
 }
 
 .secondaryButton:hover {
@@ -69,6 +71,8 @@
   font-size: 1rem;
   transition: border-color 0.3s ease;
   box-sizing: border-box;
+  background: var(--color-white);
+  color: var(--color-black);
 }
 
 .input:focus {
@@ -91,6 +95,7 @@
   transition: border-color 0.3s ease;
   background-color: var(--color-white);
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .select:focus {
@@ -110,6 +115,8 @@
   resize: vertical;
   font-family: inherit;
   box-sizing: border-box;
+  background: var(--color-white);
+  color: var(--color-black);
 }
 
 .textarea:focus {

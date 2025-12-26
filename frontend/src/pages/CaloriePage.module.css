@@ -1,0 +1,132 @@
+.title {
+  margin-bottom: 1.5rem;
+  color: #000000;
+}
+
+.calculatorSection {
+  border: 2px solid #6E8387;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  margin-bottom: 1rem;
+  color: #000000;
+  font-size: 1.3rem;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.formRowSingle {
+  margin-bottom: 1rem;
+}
+
+.heightInputs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.heightInputSmall {
+  flex: 1;
+}
+
+.results {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.resultItem {
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+}
+
+.resultLabel {
+  font-weight: 600;
+  color: #000000;
+}
+
+.goalsSection {
+  margin-top: 2rem;
+}
+
+.goalCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 2px solid #6E8387;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.goalCard:hover {
+  transform: translateX(4px);
+}
+
+.goalCardLoss {
+  background-color: #ffecec;
+}
+
+.goalCardGain {
+  background-color: #ecfff0;
+}
+
+.goalCardNeutral {
+  background-color: #f5f5f5;
+}
+
+.goalInfo {
+  flex: 1;
+}
+
+.goalLabel {
+  font-weight: 600;
+  color: #000000;
+  font-size: 1.05rem;
+}
+
+.goalSubtitle {
+  font-size: 0.85rem;
+  color: #6E8387;
+  margin-top: 0.25rem;
+}
+
+.goalCalories {
+  text-align: right;
+}
+
+.goalCaloriesNumber {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+}
+
+.goalCaloriesLabel {
+  font-size: 0.85rem;
+  color: #6E8387;
+}
+
+@media (max-width: 768px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+  
+  .goalCard {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .goalCalories {
+    text-align: left;
+  }
+}
