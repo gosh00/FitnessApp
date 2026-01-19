@@ -1,6 +1,7 @@
-import styles from './Navigation.module.css';
+import React from 'react';
+import './Navigation.css';
 
-export default function Navigation({ page, setPage }) {
+const Navigation = ({ page, setPage }) => {
   const pages = [
     { id: 'home', label: 'Home', icon: '🏠' },
     { id: 'profile', label: 'Profile', icon: '👤' },
@@ -12,22 +13,43 @@ export default function Navigation({ page, setPage }) {
   ];
 
   return (
-    <nav className={styles.navigation}>
-      <div className={styles.navContent}>
-        {pages.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => setPage(p.id)}
-            className={`${styles.navButton} ${
-              page === p.id ? styles.navButtonActive : ''
-            }`}
-          >
-            <span className={styles.icon}>{p.icon}</span>
-            <span className={styles.label}>{p.label}</span>
-          </button>
-        ))}
+    <nav className="navigation">
+      <div className="nav-container">
+        <div className="nav-logo">
+          <div className="logo-icon">💪</div>
+          <div className="logo-text">
+            <span className="logo-title">FitTrack</span>
+            <span className="logo-subtitle">Gym Progression</span>
+          </div>
+        </div>
+        
+        <div className="nav-links">
+          {pages.map((item) => (
+            <button
+              key={item.id}
+              className={`nav-link ${page === item.id ? 'active' : ''}`}
+              onClick={() => setPage(item.id)}
+              aria-label={item.label}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+              {page === item.id && <div className="active-indicator"></div>}
+            </button>
+          ))}
+        </div>
+        
+        <div className="nav-progress">
+          <div className="progress-info">
+            <span className="progress-label">Weekly Goal</span>
+            <span className="progress-value">3/5 workouts</span>
+          </div>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: '60%' }}></div>
+          </div>
+        </div>
       </div>
     </nav>
   );
-}
+};
+
+export default Navigation;

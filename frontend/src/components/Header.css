@@ -1,0 +1,286 @@
+/* Header Styles - Fitness App */
+.header {
+  background: linear-gradient(135deg, #0D0221, #1a0a3a);
+  color: #FFFFF3;
+  padding: 1rem 0;
+  position: relative;
+  border-bottom: 2px solid rgba(132, 130, 143, 0.2);
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 107, 0, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 107, 0, 0.3);
+}
+
+.streak-icon {
+  font-size: 1.2rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.streak-count {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.user-level {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.level-label {
+  font-size: 0.85rem;
+  color: #84828F;
+  font-weight: 500;
+}
+
+.level-progress {
+  width: 120px;
+  height: 6px;
+  background-color: rgba(255, 255, 243, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.level-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #84828F, #FFFFF3);
+  border-radius: 3px;
+}
+
+.header-center {
+  text-align: center;
+}
+
+.app-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+  background: linear-gradient(45deg, #FFFFF3, #84828F);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.app-subtitle {
+  font-size: 0.85rem;
+  color: #84828F;
+  letter-spacing: 0.3px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #84828F, #0D0221);
+  color: #FFFFF3;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.header-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(132, 130, 143, 0.3);
+}
+
+.btn-icon {
+  font-size: 1.1rem;
+}
+
+.user-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: rgba(255, 255, 243, 0.05);
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid rgba(132, 130, 143, 0.2);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #FFFFF3;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #84828F;
+  margin-top: 0.2rem;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 30px;
+  background-color: rgba(132, 130, 143, 0.3);
+}
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #FFFFF3;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.mobile-menu {
+  display: none;
+  background-color: #0D0221;
+  padding: 1rem;
+  border-top: 1px solid rgba(132, 130, 143, 0.2);
+}
+
+.mobile-menu.open {
+  display: block;
+}
+
+.mobile-stats {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+}
+
+.mobile-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mobile-stat-icon {
+  font-size: 1.5rem;
+  background-color: rgba(255, 255, 243, 0.1);
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-stat-value {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #FFFFF3;
+}
+
+.mobile-stat-label {
+  font-size: 0.75rem;
+  color: #84828F;
+  margin-top: 0.2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .header-container {
+    padding: 0 1.5rem;
+  }
+  
+  .app-title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-container {
+    flex-wrap: wrap;
+    padding: 0 1rem;
+  }
+  
+  .header-left {
+    order: 1;
+    flex: 1;
+  }
+  
+  .header-center {
+    order: 3;
+    width: 100%;
+    margin-top: 1rem;
+  }
+  
+  .header-right {
+    order: 2;
+    flex: 1;
+    justify-content: flex-end;
+  }
+  
+  .user-stats {
+    display: none;
+  }
+  
+  .header-btn .btn-text {
+    display: none;
+  }
+  
+  .header-btn {
+    padding: 0.7rem;
+  }
+  
+  .mobile-menu-btn {
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .streak-badge {
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .level-progress {
+    width: 80px;
+  }
+  
+  .mobile-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
