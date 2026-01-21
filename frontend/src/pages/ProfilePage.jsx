@@ -1,16 +1,25 @@
 import { useEffect, useState } from "react";
 import styles from "./ProfilePage.module.css";
 import sharedStyles from "../styles/shared.module.css";
-import { supabase } from "../supabaseClient"; // ако е в src/lib -> "../lib/supabaseClient"
+import { supabase } from "../supabaseClient";
+import api from "../api";
 
 const GOAL_OPTIONS = ["Maintain Weight", "Weight loss", "Gain Weight"];
+
+function fallbackAvatar(authId) {
+  return `https://api.dicebear.com/9.x/identicon/svg?seed=${authId || "user"}`;
+}
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
   const [editing, setEditing] = useState(false);
 
+  const [authId, setAuthId] = useState(null);
   const [userRow, setUserRow] = useState(null);
+
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -27,58 +36,27 @@ export default function ProfilePage() {
       setPageError("");
 
       try {
-        // 1) auth user
+        // 1) Frontend gets auth user
         const { data: authRes, error: authErr } = await supabase.auth.getUser();
         if (authErr) throw authErr;
         if (!authRes?.user) throw new Error("No logged-in user.");
 
-        const authId = authRes.user.id;
-        const authEmail = authRes.user.email ?? "";
+        const _authId = authRes.user.id;
+        const email = authRes.user.email;
 
-        // 2) Users row (по auth_id)
-        const { data: existing, error: rowErr } = await supabase
-          .from("Users")
-          .select("id, email, display_name, bio, age, weight, height, goal, auth_id")
-          .eq("auth_id", authId)
-          .maybeSingle();
+        if (!email) throw new Error("Auth user has no email.");
 
-        if (rowErr) throw rowErr;
+        if (!isMounted) return;
+        setAuthId(_authId);
 
-        let row = existing;
+        // 2) Backend ensures profile row exists (service role)
+        const res = await api.post("/profile/ensure", {
+          auth_id: _authId,
+          email,
+        });
 
-        // 3) ако няма запис -> insert
-        if (!row) {
-          const defaultName = authEmail ? authEmail.split("@")[0] : "User";
-
-          const { data: inserted, error: insErr } = await supabase
-            .from("Users")
-            .insert({
-              auth_id: authId,
-              email: authEmail,
-              display_name: defaultName,
-              goal: "Maintain Weight",
-            })
-            .select("id, email, display_name, bio, age, weight, height, goal, auth_id")
-            .single();
-
-          if (insErr) {
-            // ✅ точно за твоето: duplicate email
-            const msg = String(insErr.message || "");
-            const code = String(insErr.code || "");
-
-            if (msg.includes("users_email_key") || code === "23505") {
-              throw new Error(
-                "A profile row with this email already exists in the Users table (users_email_key). " +
-                  "This usually happens from old test data. " +
-                  "Fix: delete the old Users row for this email in Supabase, then refresh the page."
-              );
-            }
-
-            throw insErr;
-          }
-
-          row = inserted;
-        }
+        const row = res.data;
+        if (!row?.id) throw new Error("Profile ensure did not return a user row.");
 
         if (!isMounted) return;
 
@@ -90,9 +68,12 @@ export default function ProfilePage() {
         setWeight(row.weight ?? "");
         setHeight(row.height ?? "");
         setGoal(GOAL_OPTIONS.includes(row.goal) ? row.goal : "Maintain Weight");
-      } catch (e) {
-        if (!isMounted) return;
-        setPageError(e?.message || "Failed to load profile.");
+        const base = row.avatar_url || fallbackAvatar(_authId);
+        setAvatarUrl(`${base}${base.includes("?") ? "&" : "?"}t=${Date.now()}`);
+
+      } catch (err) {
+        const msg = err?.response?.data?.error || err?.message || "Failed to load profile.";
+        if (isMounted) setPageError(msg);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -105,9 +86,11 @@ export default function ProfilePage() {
     };
   }, []);
 
-  const handleEdit = () => setEditing(true);
+  const handleEdit = () => {
+    setEditing(true);
+    setPageError("");
+  };
 
-  // Cancel -> DB стойности
   const handleCancel = () => {
     if (!userRow) return;
 
@@ -117,8 +100,10 @@ export default function ProfilePage() {
     setWeight(userRow.weight ?? "");
     setHeight(userRow.height ?? "");
     setGoal(GOAL_OPTIONS.includes(userRow.goal) ? userRow.goal : "Maintain Weight");
+    setAvatarUrl(userRow.avatar_url || fallbackAvatar(authId));
 
     setEditing(false);
+    setPageError("");
   };
 
   const handleSave = async () => {
@@ -148,38 +133,92 @@ export default function ProfilePage() {
     }
 
     try {
-      const payload = {
+      const res = await api.post("/profile/update", {
+        user_id: userRow.id,
         display_name: displayName.trim(),
         bio: bio.trim(),
         age: ageNum,
         weight: weightNum,
         height: heightNum,
         goal,
-      };
+      });
 
-      const { data: updated, error: updErr } = await supabase
-        .from("Users")
-        .update(payload)
-        .eq("id", userRow.id)
-        .select("id, email, display_name, bio, age, weight, height, goal, auth_id")
-        .single();
-
-      if (updErr) throw updErr;
+      const updated = res.data;
+      if (!updated?.id) throw new Error("Profile update did not return a row.");
 
       setUserRow(updated);
 
-      // Sync form with saved DB values
       setDisplayName(updated.display_name ?? "");
       setBio(updated.bio ?? "");
       setAge(updated.age ?? "");
       setWeight(updated.weight ?? "");
       setHeight(updated.height ?? "");
       setGoal(GOAL_OPTIONS.includes(updated.goal) ? updated.goal : "Maintain Weight");
+      setAvatarUrl(updated.avatar_url || fallbackAvatar(authId));
 
       setEditing(false);
       alert("Profile updated!");
-    } catch (e) {
-      setPageError(e?.message || "Failed to save profile.");
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || "Failed to save profile.";
+      setPageError(msg);
+    }
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!editing) {
+      alert("Click Edit Profile first.");
+      e.target.value = "";
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Max file size is 5MB.");
+      e.target.value = "";
+      return;
+    }
+
+    if (!userRow?.id || !authId) {
+      setPageError("Missing user id/auth id.");
+      e.target.value = "";
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setPageError("");
+
+    try {
+      const form = new FormData();
+      form.append("avatar", file);
+      form.append("auth_id", authId);
+      form.append("user_id", userRow.id);
+
+      const res = await api.post("/profile/avatar", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const newUrl = res.data?.avatar_url;
+      if (!newUrl) throw new Error("Backend did not return avatar_url.");
+
+      const busted = `${newUrl}${newUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+
+      setAvatarUrl(busted);
+      setUserRow((prev) => (prev ? { ...prev, avatar_url: newUrl } : prev)); // keep DB URL clean
+
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || "Upload failed";
+      setPageError(msg);
+    } finally {
+      setUploadingAvatar(false);
+      e.target.value = "";
     }
   };
 
@@ -204,8 +243,43 @@ export default function ProfilePage() {
   return (
     <div className={sharedStyles.card}>
       <h2 className={styles.title}>Your Profile</h2>
-
       {pageError && <p style={{ color: "red" }}>{pageError}</p>}
+
+      {/* AVATAR */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+        <img
+          src={avatarUrl || fallbackAvatar(authId)}
+          alt="avatar"
+          style={{
+            width: 88,
+            height: 88,
+            borderRadius: "50%",
+            objectFit: "cover",
+            border: "2px solid #ccc",
+            background: "#f5f5f5",
+          }}
+          onError={(ev) => {
+            ev.currentTarget.src = fallbackAvatar(authId);
+          }}
+        />
+
+        <label
+          className={sharedStyles.secondaryButton}
+          style={{
+            cursor: editing && !uploadingAvatar ? "pointer" : "not-allowed",
+            opacity: editing && !uploadingAvatar ? 1 : 0.6,
+          }}
+        >
+          {uploadingAvatar ? "Uploading..." : "Change photo"}
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            disabled={!editing || uploadingAvatar}
+            onChange={handleAvatarChange}
+          />
+        </label>
+      </div>
 
       <div className={styles.profileGrid}>
         <div className={sharedStyles.formGroup}>
