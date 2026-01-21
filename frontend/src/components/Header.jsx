@@ -1,22 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import "./Header.css";
-import { supabase } from "../supabaseClient"; // ако е в src/lib -> "../lib/supabaseClient"
+import { supabase } from "../supabaseClient";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
 
   const [userStats, setUserStats] = useState({
+    displayName: "User",
+    avatarUrl: null,
     streak: 0,
-    weight: null,
-    goal: "Maintain Weight",
     level: 1,
     levelProgressPct: 0,
   });
 
-  const toggleMenu = () => setIsMenuOpen((v) => !v);
+  const goToProfile = () => {
+    // сменя страницата директно
+    window.location.href = "/profile";
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -26,26 +28,26 @@ const Header = () => {
       setPageError("");
 
       try {
-        // 1) auth
         const { data: authRes, error: authErr } = await supabase.auth.getUser();
         if (authErr) throw authErr;
         if (!authRes?.user) throw new Error("No logged-in user.");
 
-        const authId = authRes.user.id;
+        const authUser = authRes.user;
 
-        // 2) Users row (по auth_id)
         const { data: userRow, error: uErr } = await supabase
           .from("Users")
-          .select("id, goal, weight, auth_id")
-          .eq("auth_id", authId)
+          .select("id, auth_id, display_name, avatar_url")
+          .eq("auth_id", authUser.id)
           .maybeSingle();
 
         if (uErr) throw uErr;
-        if (!userRow) throw new Error("No Users row found. Open Profile once to create it.");
+        if (!userRow) throw new Error("No Users row found.");
 
         const appUserId = userRow.id;
 
-        // 3) total workouts count (за level)
+        const displayName = userRow.display_name || authUser.email || "User";
+        const avatarUrl = userRow.avatar_url || null;
+
         const { count: workoutsCount, error: wcErr } = await supabase
           .from("Workouts")
           .select("id", { count: "exact", head: true })
@@ -53,14 +55,12 @@ const Header = () => {
 
         if (wcErr) throw wcErr;
 
-        // level formula (пример)
         const workouts = workoutsCount ?? 0;
-        const workoutsPerLevel = 5; // смени както искаш
+        const workoutsPerLevel = 5;
         const level = Math.max(1, 1 + Math.floor(workouts / workoutsPerLevel));
         const withinLevel = workouts % workoutsPerLevel;
         const levelProgressPct = Math.round((withinLevel / workoutsPerLevel) * 100);
 
-        // 4) streak from ExerciseLog
         const { data: logs, error: lErr } = await supabase
           .from("ExerciseLog")
           .select("date")
@@ -73,9 +73,9 @@ const Header = () => {
         if (!isMounted) return;
 
         setUserStats({
+          displayName,
+          avatarUrl,
           streak,
-          weight: userRow.weight === null || userRow.weight === undefined ? null : Number(userRow.weight),
-          goal: userRow.goal || "Maintain Weight",
           level,
           levelProgressPct,
         });
@@ -94,87 +94,103 @@ const Header = () => {
     };
   }, []);
 
-  const weightText = useMemo(() => {
-    if (userStats.weight === null || Number.isNaN(userStats.weight)) return "—";
-    // ако при теб weight е в kg, оставям kg:
-    return `${userStats.weight} kg`;
-    // ако искаш lbs:
-    // return `${Math.round(userStats.weight * 2.20462)} lbs`;
-  }, [userStats.weight]);
+  const initials = useMemo(() => {
+    const n = (userStats.displayName || "").trim();
+    if (!n) return "U";
+    const parts = n.split(/\s+/);
+    return (parts[0][0] + (parts[1]?.[0] || "")).toUpperCase();
+  }, [userStats.displayName]);
 
   return (
     <header className="header">
-      <div className="header-container">
-        <div className="header-left">
+      <div className="header-container header-compact">
+
+        {/* LEFT */}
+        <div className="header-left header-left-profile">
+          <button
+            onClick={goToProfile}
+            className="profile-chip"
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              color: "inherit",
+              font: "inherit",
+            }}
+          >
+            {userStats.avatarUrl ? (
+              <img
+                src={userStats.avatarUrl}
+                alt="avatar"
+                className="profile-avatar"
+              />
+            ) : (
+              <div className="profile-avatar fallback">{initials}</div>
+            )}
+            <span className="profile-name">{userStats.displayName}</span>
+          </button>
+
+          <div className="user-level compact">
+            <span className="level-label">Level {userStats.level}</span>
+            <div className="level-progress">
+              <div
+                className="level-fill"
+                style={{ width: `${userStats.levelProgressPct}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* CENTER */}
+        <div className="header-center">
+          <h1 className="app-title">Fitness Pro</h1>
+          <p className="app-subtitle">Track Your Gym Progression</p>
+          {loading && <p style={{ fontSize: 12 }}>Loading…</p>}
+          {pageError && <p style={{ fontSize: 12, color: "salmon" }}>{pageError}</p>}
+        </div>
+
+        {/* RIGHT */}
+        <div className="header-right header-right-streak">
           <div className="streak-badge">
             <span className="streak-icon">🔥</span>
             <span className="streak-count">{userStats.streak} days</span>
           </div>
 
-          <div className="user-level">
-            <span className="level-label">Level {userStats.level}</span>
-            <div className="level-progress">
-              <div className="level-fill" style={{ width: `${userStats.levelProgressPct}%` }}></div>
-            </div>
-          </div>
-        </div>
-
-        <div className="header-center">
-          <h1 className="app-title">FitTrack Pro</h1>
-          <p className="app-subtitle">Track Your Gym Progression</p>
-          {loading && <p style={{ fontSize: 12, opacity: 0.8 }}>Loading…</p>}
-          {pageError && <p style={{ fontSize: 12, color: "salmon" }}>{pageError}</p>}
-        </div>
-
-        <div className="header-right">
-          <button className="header-btn quick-actions" aria-label="Quick Actions">
-            <span className="btn-icon">⚡</span>
-            <span className="btn-text">Quick Start</span>
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setIsMenuOpen((v) => !v)}
+          >
+            <i className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"}`} />
           </button>
-
-          <button className="mobile-menu-btn" onClick={toggleMenu} aria-label="Toggle menu">
-            <i className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"}`}></i>
-          </button>
-
-          <div className="user-stats">
-            <div className="stat-item">
-              <span className="stat-value">{weightText}</span>
-              <span className="stat-label">Current Weight</span>
-            </div>
-            <div className="stat-divider"></div>
-            <div className="stat-item">
-              <span className="stat-value">{userStats.goal}</span>
-              <span className="stat-label">Goal</span>
-            </div>
-          </div>
         </div>
       </div>
 
+      {/* MOBILE MENU */}
       <div className={`mobile-menu ${isMenuOpen ? "open" : ""}`}>
         <div className="mobile-stats">
-          <div className="mobile-stat">
-            <span className="mobile-stat-icon">🔥</span>
-            <div className="mobile-stat-info">
-              <span className="mobile-stat-value">{userStats.streak} days</span>
-              <span className="mobile-stat-label">Current Streak</span>
+          <button
+            onClick={goToProfile}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              width: "100%",
+              textAlign: "left",
+              cursor: "pointer",
+            }}
+          >
+            <div className="mobile-stat">
+              <span className="mobile-stat-icon">👤</span>
+              <div className="mobile-stat-info">
+                <span className="mobile-stat-value">{userStats.displayName}</span>
+                <span className="mobile-stat-label">Profile</span>
+              </div>
             </div>
-          </div>
-
-          <div className="mobile-stat">
-            <span className="mobile-stat-icon">🏋️</span>
-            <div className="mobile-stat-info">
-              <span className="mobile-stat-value">{weightText}</span>
-              <span className="mobile-stat-label">Weight</span>
-            </div>
-          </div>
-
-          <div className="mobile-stat">
-            <span className="mobile-stat-icon">🎯</span>
-            <div className="mobile-stat-info">
-              <span className="mobile-stat-value">{userStats.goal}</span>
-              <span className="mobile-stat-label">Goal</span>
-            </div>
-          </div>
+          </button>
         </div>
       </div>
     </header>
@@ -182,8 +198,7 @@ const Header = () => {
 };
 
 function calcStreakDaysFromLogs(logs) {
-  // logs: [{date: 'YYYY-MM-DD'}, ...]
-  const days = new Set((logs ?? []).map((l) => l.date).filter(Boolean));
+  const days = new Set(logs.map((l) => l.date).filter(Boolean));
   let streak = 0;
 
   for (let i = 0; ; i++) {

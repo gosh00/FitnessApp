@@ -1,178 +1,191 @@
-/* Header Styles - Fitness App */
+/* Header.css */
 .header {
-  background: linear-gradient(135deg, #0D0221, #1a0a3a);
-  color: #FFFFF3;
+  background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+  color: white;
   padding: 1rem 0;
-  position: relative;
-  border-bottom: 2px solid rgba(132, 130, 143, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 2rem;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
 }
 
+/* Left Section - Profile */
 .header-left {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.streak-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 107, 0, 0.1);
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 107, 0, 0.3);
-}
-
-.streak-icon {
-  font-size: 1.2rem;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
-}
-
-.streak-count {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.user-level {
-  display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.75rem;
+  min-width: 200px;
+}
+
+.profile-chip {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  font: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.profile-chip:hover {
+  opacity: 0.9;
+}
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.profile-avatar.fallback {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.profile-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: white;
+}
+
+/* Level Progress */
+.user-level.compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
 }
 
 .level-label {
-  font-size: 0.85rem;
-  color: #84828F;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f8f9fa;
 }
 
 .level-progress {
-  width: 120px;
+  flex: 1;
   height: 6px;
-  background-color: rgba(255, 255, 243, 0.1);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .level-fill {
   height: 100%;
-  background: linear-gradient(90deg, #84828F, #FFFFF3);
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
   border-radius: 3px;
+  transition: width 0.3s ease;
 }
 
+/* Center Section */
 .header-center {
   text-align: center;
+  flex: 1;
+  max-width: 500px;
 }
 
 .app-title {
   font-size: 1.8rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.2rem;
-  background: linear-gradient(45deg, #FFFFF3, #84828F);
+  margin: 0;
+  background: linear-gradient(90deg, #fff, #f8f9fa);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  letter-spacing: -0.5px;
 }
 
 .app-subtitle {
-  font-size: 0.85rem;
-  color: #84828F;
-  letter-spacing: 0.3px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0.25rem 0 0 0;
+  font-weight: 400;
 }
 
+/* Right Section */
 .header-right {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  min-width: 200px;
+  justify-content: flex-end;
 }
 
-.header-btn {
+.streak-badge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #84828F, #0D0221);
-  color: #FFFFF3;
-  border: none;
-  padding: 0.7rem 1.2rem;
-  border-radius: 10px;
-  cursor: pointer;
+  gap: 8px;
+  background: rgba(255, 107, 107, 0.15);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 107, 107, 0.3);
   transition: all 0.3s ease;
+}
+
+.streak-badge:hover {
+  background: rgba(255, 107, 107, 0.25);
+  transform: translateY(-1px);
+}
+
+.streak-icon {
+  font-size: 1.2rem;
+}
+
+.streak-count {
   font-weight: 600;
+  font-size: 0.95rem;
+  color: #ff6b6b;
 }
 
-.header-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(132, 130, 143, 0.3);
-}
-
-.btn-icon {
-  font-size: 1.1rem;
-}
-
-.user-stats {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background-color: rgba(255, 255, 243, 0.05);
-  padding: 0.7rem 1.2rem;
-  border-radius: 10px;
-  border: 1px solid rgba(132, 130, 143, 0.2);
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.stat-value {
-  font-weight: 700;
-  font-size: 1rem;
-  color: #FFFFF3;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #84828F;
-  margin-top: 0.2rem;
-}
-
-.stat-divider {
-  width: 1px;
-  height: 30px;
-  background-color: rgba(132, 130, 143, 0.3);
-}
-
+/* Mobile Menu Button */
 .mobile-menu-btn {
   display: none;
-  background: none;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
-  color: #FFFFF3;
-  font-size: 1.5rem;
+  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  color: white;
+  font-size: 1.2rem;
   cursor: pointer;
-  padding: 0.5rem;
+  transition: all 0.2s ease;
 }
 
+.mobile-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Mobile Menu */
 .mobile-menu {
   display: none;
-  background-color: #0D0221;
+  background: #2c3e50;
   padding: 1rem;
-  border-top: 1px solid rgba(132, 130, 143, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .mobile-menu.open {
@@ -181,25 +194,26 @@
 
 .mobile-stats {
   display: flex;
-  justify-content: space-around;
+  flex-direction: column;
   gap: 1rem;
 }
 
 .mobile-stat {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 12px;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.mobile-stat:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .mobile-stat-icon {
   font-size: 1.5rem;
-  background-color: rgba(255, 255, 243, 0.1);
-  width: 45px;
-  height: 45px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .mobile-stat-info {
@@ -209,78 +223,86 @@
 
 .mobile-stat-value {
   font-weight: 600;
-  font-size: 0.9rem;
-  color: #FFFFF3;
+  color: white;
+  font-size: 1rem;
 }
 
 .mobile-stat-label {
-  font-size: 0.75rem;
-  color: #84828F;
-  margin-top: 0.2rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .header-container {
-    padding: 0 1.5rem;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 1rem;
   }
-  
+
+  .header-left,
+  .header-right {
+    width: 100%;
+    min-width: unset;
+    justify-content: space-between;
+  }
+
+  .header-left {
+    order: 1;
+  }
+
+  .header-center {
+    order: 2;
+    max-width: 100%;
+  }
+
+  .header-right {
+    order: 3;
+    display: none; /* Hide regular streak badge on mobile */
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .app-title {
     font-size: 1.5rem;
   }
-}
 
-@media (max-width: 768px) {
-  .header-container {
-    flex-wrap: wrap;
-    padding: 0 1rem;
+  .app-subtitle {
+    font-size: 0.85rem;
   }
-  
-  .header-left {
-    order: 1;
-    flex: 1;
+
+  .profile-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
   }
-  
-  .header-center {
-    order: 3;
-    width: 100%;
-    margin-top: 1rem;
-  }
-  
-  .header-right {
-    order: 2;
-    flex: 1;
-    justify-content: flex-end;
-  }
-  
-  .user-stats {
-    display: none;
-  }
-  
-  .header-btn .btn-text {
-    display: none;
-  }
-  
-  .header-btn {
-    padding: 0.7rem;
-  }
-  
-  .mobile-menu-btn {
-    display: block;
+
+  .profile-name {
+    font-size: 1rem;
   }
 }
 
 @media (max-width: 480px) {
-  .streak-badge {
-    padding: 0.4rem 0.8rem;
+  .profile-name {
+    display: none; /* Hide name on very small screens */
   }
-  
-  .level-progress {
-    width: 80px;
-  }
-  
-  .mobile-stats {
-    flex-direction: column;
-    gap: 1rem;
-  }
+}
+
+/* Loading & Error States */
+.header-container > .loading {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  width: 100%;
+}
+
+.header-container > .error {
+  font-size: 0.9rem;
+  color: #ff6b6b;
+  text-align: center;
+  width: 100%;
 }
