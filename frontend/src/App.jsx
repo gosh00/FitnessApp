@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useEffect, useState } from 'react';
-import { supabase } from './supabaseClient';
+import { supabase } from "./supabaseClient";
 
 import Header from './components/Header';
 import Navigation from './components/Navigation';

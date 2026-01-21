@@ -1,31 +1,348 @@
-.title {
-  margin-bottom: 1.5rem;
-  color: #000000;
+/* Profile Page Styles */
+.profileContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
 }
 
-.profileGrid {
+/* Header */
+.profileHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.profileTitle {
+  color: #2c3e50;
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
+
+.profileSubtitle {
+  color: #6c757d;
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* Profile Content Grid */
+.profileContent {
   display: grid;
-  gap: 1rem;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
 }
 
+@media (min-width: 992px) {
+  .profileContent {
+    grid-template-columns: 1.2fr 0.8fr;
+  }
+}
+
+/* Left Column - Main Info */
+.mainInfoCard {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e9ecef;
+}
+
+.sectionTitle {
+  color: #2c3e50;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f3f4;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sectionTitle::before {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 24px;
+  background: linear-gradient(to bottom, #2980b9, #2c3e50);
+  border-radius: 3px;
+}
+
+/* Info Groups */
+.infoGroup {
+  margin-bottom: 2.5rem;
+}
+
+.infoGroup:last-child {
+  margin-bottom: 0;
+}
+
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.75rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.infoRow:hover {
+  background-color: #f8fafc;
+}
+
+.infoLabel {
+  flex: 0 0 180px;
+  color: #495057;
+  font-weight: 600;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.infoLabel::after {
+  content: ":";
+  color: #6c757d;
+}
+
+.infoValue {
+  flex: 1;
+  color: #212529;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  padding-left: 1rem;
+}
+
+.bioText {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  background: #f8fafc;
+  padding: 1.25rem;
+  border-radius: 10px;
+  border-left: 4px solid #2980b9;
+  margin-top: 0.5rem;
+  color: #495057;
+}
+
+/* Right Column - Stats Card */
+.statsCard {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e9ecef;
+  height: fit-content;
+}
+
+.statsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.statsTitle {
+  color: #2c3e50;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Goal Badge */
+.goalBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1.25rem;
+  background: linear-gradient(135deg, #e8f4fd, #d4e9ff);
+  color: #2980b9;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  gap: 0.5rem;
+}
+
+.goalBadge.loss {
+  background: linear-gradient(135deg, #e8f5e8, #d4f1d4);
+  color: #27ae60;
+}
+
+.goalBadge.gain {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+}
+
+/* Stats Grid */
 .statsGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1rem;
-}
-
-.buttonGroup {
-  display: flex;
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.5rem;
   margin-top: 1rem;
 }
 
-@media (max-width: 768px) {
-  .statsGrid {
-    grid-template-columns: 1fr;
-  }
-  
-  .buttonGroup {
-    flex-direction: column;
-  }
+.statItem {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.statItem:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.statIcon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #2980b9;
+}
+
+.statLabel {
+  display: block;
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.statValue {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #2c3e50;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.statUnit {
+  display: block;
+  font-size: 0.9rem;
+  color: #868e96;
+  font-weight: 500;
+}
+
+/* Action Buttons */
+.actionSection {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.editButton {
+  background: linear-gradient(135deg, #2c3e50, #1a252f);
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
+}
+
+.editButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(44, 62, 80, 0.3);
+}
+
+.saveButton {
+  background: linear-gradient(135deg, #27ae60, #219653);
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);
+}
+
+.saveButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+}
+
+.cancelButton {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cancelButton:hover {
+  background: #5a6268;
+  transform: translateY(-3px);
+}
+
+/* Loading State */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1.5rem;
+}
+
+.loadingSpinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(41, 128, 185, 0.1);
+  border-top: 4px solid #2980b9;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error State */
+.errorContainer {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 600px;
+  text-align: center;
+}
+
+.errorTitle {
+  color: #c53030;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.errorMessage {
+  color: #718096;
+  line-height: 1.6;
 }

@@ -1,43 +1,43 @@
-import { useCallback, useEffect, useState } from 'react';
-import api from '../api';
-import styles from './ExercisesPage.module.css';
-import sharedStyles from '../styles/shared.module.css';
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "../supabaseClient"; // ако е в src/lib -> "../lib/supabaseClient"
+import styles from "./ExercisesPage.module.css";
+import sharedStyles from "../styles/shared.module.css";
 
 export default function ExercisesPage() {
   const [exercises, setExercises] = useState([]);
-  const [muscleFilter, setMuscleFilter] = useState('');
+  const [muscleFilter, setMuscleFilter] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pageError, setPageError] = useState("");
 
   const loadExercises = useCallback(async () => {
-    // async boundary to satisfy react-hooks/set-state-in-effect
-    await Promise.resolve();
     setLoading(true);
-
-    let cancelled = false;
+    setPageError("");
 
     try {
-      const res = await api.get('/exercises', {
-        params: muscleFilter ? { muscle: muscleFilter } : {},
-      });
+      let query = supabase
+        .from("Exercises")
+        .select("id, name, muscle_group, description, image_url")
+        .order("name", { ascending: true });
 
-      if (!cancelled) setExercises(res.data);
-    } catch (err) {
-      if (!cancelled) {
-        console.error(err);
-        alert('Error loading exercises');
+      if (muscleFilter.trim()) {
+        // case-insensitive filter (partial match)
+        query = query.ilike("muscle_group", `%${muscleFilter.trim()}%`);
       }
-    } finally {
-      if (!cancelled) setLoading(false);
-    }
 
-    // return a cancel function (useful if you later call this inside an effect cleanup)
-    return () => {
-      cancelled = true;
-    };
+      const { data, error } = await query;
+      if (error) throw error;
+
+      setExercises(data ?? []);
+    } catch (err) {
+      console.error(err);
+      setPageError(err?.message || "Error loading exercises");
+      setExercises([]);
+    } finally {
+      setLoading(false);
+    }
   }, [muscleFilter]);
 
   useEffect(() => {
-    // load once on mount
     loadExercises();
   }, [loadExercises]);
 
@@ -54,13 +54,15 @@ export default function ExercisesPage() {
         />
         <button
           type="button"
-          onClick={() => loadExercises()}
+          onClick={loadExercises}
           className={sharedStyles.primaryButton}
           disabled={loading}
         >
           Apply filter
         </button>
       </div>
+
+      {pageError && <div style={{ color: "red", marginTop: 8 }}>{pageError}</div>}
 
       {loading && <div className={sharedStyles.loading}>Loading exercises...</div>}
 
@@ -73,6 +75,15 @@ export default function ExercisesPage() {
           <li key={ex.id} className={styles.exerciseItem}>
             <div className={styles.exerciseName}>{ex.name}</div>
             <div className={styles.exerciseMuscle}>{ex.muscle_group}</div>
+
+            {ex.image_url && (
+              <img
+                src={ex.image_url}
+                alt={ex.name}
+                style={{ maxWidth: 220, borderRadius: 10, marginTop: 8 }}
+              />
+            )}
+
             {ex.description && (
               <div className={styles.exerciseDescription}>{ex.description}</div>
             )}
