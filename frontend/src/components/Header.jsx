@@ -20,6 +20,16 @@ const Header = () => {
     window.location.href = "/profile";
   };
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      window.location.href = "/"; // към login/home
+    } catch (err) {
+      alert("Logout failed: " + (err?.message || err));
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -104,7 +114,6 @@ const Header = () => {
   return (
     <header className="header">
       <div className="header-container header-compact">
-
         {/* LEFT */}
         <div className="header-left header-left-profile">
           <button
@@ -123,11 +132,7 @@ const Header = () => {
             }}
           >
             {userStats.avatarUrl ? (
-              <img
-                src={userStats.avatarUrl}
-                alt="avatar"
-                className="profile-avatar"
-              />
+              <img src={userStats.avatarUrl} alt="avatar" className="profile-avatar" />
             ) : (
               <div className="profile-avatar fallback">{initials}</div>
             )}
@@ -137,10 +142,7 @@ const Header = () => {
           <div className="user-level compact">
             <span className="level-label">Level {userStats.level}</span>
             <div className="level-progress">
-              <div
-                className="level-fill"
-                style={{ width: `${userStats.levelProgressPct}%` }}
-              />
+              <div className="level-fill" style={{ width: `${userStats.levelProgressPct}%` }} />
             </div>
           </div>
         </div>
@@ -160,10 +162,25 @@ const Header = () => {
             <span className="streak-count">{userStats.streak} days</span>
           </div>
 
+          {/* ✅ LOGOUT BUTTON (desktop) */}
           <button
-            className="mobile-menu-btn"
-            onClick={() => setIsMenuOpen((v) => !v)}
+            onClick={handleLogout}
+            className="logout-btn"
+            style={{
+              marginLeft: 12,
+              padding: "6px 12px",
+              borderRadius: 8,
+              border: "1px solid #ccc",
+              background: "white",
+              cursor: "pointer",
+              fontSize: 12,
+              whiteSpace: "nowrap",
+            }}
           >
+            Logout
+          </button>
+
+          <button className="mobile-menu-btn" onClick={() => setIsMenuOpen((v) => !v)}>
             <i className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"}`} />
           </button>
         </div>
@@ -188,6 +205,28 @@ const Header = () => {
               <div className="mobile-stat-info">
                 <span className="mobile-stat-value">{userStats.displayName}</span>
                 <span className="mobile-stat-label">Profile</span>
+              </div>
+            </div>
+          </button>
+
+          {/* ✅ LOGOUT BUTTON (mobile) */}
+          <button
+            onClick={handleLogout}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              width: "100%",
+              textAlign: "left",
+              cursor: "pointer",
+              marginTop: 10,
+            }}
+          >
+            <div className="mobile-stat">
+              <span className="mobile-stat-icon">🚪</span>
+              <div className="mobile-stat-info">
+                <span className="mobile-stat-value">Logout</span>
+                <span className="mobile-stat-label">Sign out</span>
               </div>
             </div>
           </button>

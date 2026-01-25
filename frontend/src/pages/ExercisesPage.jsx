@@ -18,11 +18,14 @@ function toYouTubeEmbed(url = "") {
 
 export default function ExercisesPage() {
   const [exercises, setExercises] = useState([]);
+
+  const [nameFilter, setNameFilter] = useState("");     // ✅ NEW
   const [muscleFilter, setMuscleFilter] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [pageError, setPageError] = useState("");
 
-  const [selected, setSelected] = useState(null); // ✅ for modal
+  const [selected, setSelected] = useState(null); // ✅ modal
 
   const loadExercises = useCallback(async () => {
     setLoading(true);
@@ -31,10 +34,15 @@ export default function ExercisesPage() {
     try {
       let query = supabase
         .from("Exercises")
-        // ✅ include video_url
         .select("id, name, muscle_group, description, image_url, video_url")
         .order("name", { ascending: true });
 
+      // ✅ filter by name (case-insensitive, partial match)
+      if (nameFilter.trim()) {
+        query = query.ilike("name", `%${nameFilter.trim()}%`);
+      }
+
+      // ✅ filter by muscle group (case-insensitive, partial match)
       if (muscleFilter.trim()) {
         query = query.ilike("muscle_group", `%${muscleFilter.trim()}%`);
       }
@@ -50,7 +58,7 @@ export default function ExercisesPage() {
     } finally {
       setLoading(false);
     }
-  }, [muscleFilter]);
+  }, [nameFilter, muscleFilter]);
 
   useEffect(() => {
     loadExercises();
@@ -60,13 +68,22 @@ export default function ExercisesPage() {
     <div className={sharedStyles.card}>
       <h2 className={styles.title}>Exercises Library</h2>
 
+      {/* ✅ Filters */}
       <div className={styles.filterSection}>
+        <input
+          placeholder="Filter by name (e.g. bench, squat)"
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          className={`${sharedStyles.input} ${styles.filterInput}`}
+        />
+
         <input
           placeholder="Filter by muscle (e.g. chest, legs)"
           value={muscleFilter}
           onChange={(e) => setMuscleFilter(e.target.value)}
           className={`${sharedStyles.input} ${styles.filterInput}`}
         />
+
         <button
           type="button"
           onClick={loadExercises}
@@ -76,6 +93,9 @@ export default function ExercisesPage() {
           Apply filter
         </button>
       </div>
+
+      {/* (Optional) Admin form - show it always, or later limit by email */}
+      <AdminAddExercise onAdded={loadExercises} />
 
       {pageError && <div style={{ color: "red", marginTop: 8 }}>{pageError}</div>}
 
@@ -91,7 +111,6 @@ export default function ExercisesPage() {
           <li
             key={ex.id}
             className={styles.exerciseItem}
-            // ✅ click to open modal
             onClick={() => setSelected(ex)}
             style={{ cursor: "pointer" }}
             title="Click for details"
