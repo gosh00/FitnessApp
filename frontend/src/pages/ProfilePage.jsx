@@ -10,7 +10,7 @@ function fallbackAvatar(authId) {
   return `https://api.dicebear.com/9.x/identicon/svg?seed=${authId || "user"}`;
 }
 
-export default function ProfilePage() {
+export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
   const [editing, setEditing] = useState(false);
@@ -36,14 +36,17 @@ export default function ProfilePage() {
       setPageError("");
 
       try {
-        // 1) Frontend gets auth user
+        // 1) Get auth user (prefer Supabase getUser for correctness)
         const { data: authRes, error: authErr } = await supabase.auth.getUser();
         if (authErr) throw authErr;
-        if (!authRes?.user) throw new Error("No logged-in user.");
 
-        const _authId = authRes.user.id;
-        const email = authRes.user.email;
+        const authUser = authRes?.user ?? currentUser ?? null;
+        if (!authUser) throw new Error("No logged-in user.");
 
+        const _authId = authUser.id;
+        const email = authUser.email;
+
+        if (!_authId) throw new Error("Auth user missing id.");
         if (!email) throw new Error("Auth user has no email.");
 
         if (!isMounted) return;
@@ -68,9 +71,9 @@ export default function ProfilePage() {
         setWeight(row.weight ?? "");
         setHeight(row.height ?? "");
         setGoal(GOAL_OPTIONS.includes(row.goal) ? row.goal : "Maintain Weight");
+
         const base = row.avatar_url || fallbackAvatar(_authId);
         setAvatarUrl(`${base}${base.includes("?") ? "&" : "?"}t=${Date.now()}`);
-
       } catch (err) {
         const msg = err?.response?.data?.error || err?.message || "Failed to load profile.";
         if (isMounted) setPageError(msg);
@@ -84,7 +87,7 @@ export default function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [currentUser]);
 
   const handleEdit = () => {
     setEditing(true);
@@ -100,7 +103,9 @@ export default function ProfilePage() {
     setWeight(userRow.weight ?? "");
     setHeight(userRow.height ?? "");
     setGoal(GOAL_OPTIONS.includes(userRow.goal) ? userRow.goal : "Maintain Weight");
-    setAvatarUrl(userRow.avatar_url || fallbackAvatar(authId));
+
+    const base = userRow.avatar_url || fallbackAvatar(authId);
+    setAvatarUrl(`${base}${base.includes("?") ? "&" : "?"}t=${Date.now()}`);
 
     setEditing(false);
     setPageError("");
@@ -154,9 +159,15 @@ export default function ProfilePage() {
       setWeight(updated.weight ?? "");
       setHeight(updated.height ?? "");
       setGoal(GOAL_OPTIONS.includes(updated.goal) ? updated.goal : "Maintain Weight");
-      setAvatarUrl(updated.avatar_url || fallbackAvatar(authId));
+
+      const base = updated.avatar_url || fallbackAvatar(authId);
+      setAvatarUrl(`${base}${base.includes("?") ? "&" : "?"}t=${Date.now()}`);
 
       setEditing(false);
+
+      // optional: notify App (not required, but kept)
+      onUpdateProfile?.(currentUser);
+
       alert("Profile updated!");
     } catch (err) {
       const msg = err?.response?.data?.error || err?.message || "Failed to save profile.";
@@ -212,7 +223,6 @@ export default function ProfilePage() {
 
       setAvatarUrl(busted);
       setUserRow((prev) => (prev ? { ...prev, avatar_url: newUrl } : prev)); // keep DB URL clean
-
     } catch (err) {
       const msg = err?.response?.data?.error || err?.message || "Upload failed";
       setPageError(msg);
@@ -225,7 +235,12 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className={sharedStyles.card}>
-        <h2 className={styles.title}>Your Profile</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 className={styles.title}>Your Profile</h2>
+          <button className={sharedStyles.secondaryButton} onClick={() => setPage?.("home")}>
+            Back
+          </button>
+        </div>
         <p>Loading…</p>
       </div>
     );
@@ -234,7 +249,12 @@ export default function ProfilePage() {
   if (pageError && !userRow) {
     return (
       <div className={sharedStyles.card}>
-        <h2 className={styles.title}>Your Profile</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 className={styles.title}>Your Profile</h2>
+          <button className={sharedStyles.secondaryButton} onClick={() => setPage?.("home")}>
+            Back
+          </button>
+        </div>
         <p style={{ color: "red" }}>{pageError}</p>
       </div>
     );
@@ -242,7 +262,13 @@ export default function ProfilePage() {
 
   return (
     <div className={sharedStyles.card}>
-      <h2 className={styles.title}>Your Profile</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h2 className={styles.title}>Your Profile</h2>
+        <button className={sharedStyles.secondaryButton} onClick={() => setPage?.("home")}>
+          Back
+        </button>
+      </div>
+
       {pageError && <p style={{ color: "red" }}>{pageError}</p>}
 
       {/* AVATAR */}

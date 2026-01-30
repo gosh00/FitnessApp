@@ -4,7 +4,6 @@ import './Navigation.css';
 const Navigation = ({ page, setPage }) => {
   const pages = [
     { id: 'home', label: 'Home', icon: '🏠' },
-    { id: 'profile', label: 'Profile', icon: '👤' },
     { id: 'exercises', label: 'Exercises', icon: '🏋️' },
     { id: 'log', label: 'Log Workout', icon: '📝' },
     { id: 'workouts', label: 'Feed', icon: '📱' },

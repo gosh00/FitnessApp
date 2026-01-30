@@ -1,36 +1,41 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./LogWorkoutPage.module.css";
 import sharedStyles from "../styles/shared.module.css";
-import { supabase } from "../supabaseClient"; // ако е в src/lib -> "../lib/supabaseClient"
+import { supabase } from "../supabaseClient";
+import ExercisePicker from "../components/ExercisePicker";
+
+function getLocalDateKey() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`; // YYYY-MM-DD (local)
+}
 
 export default function LogWorkoutPage() {
-  const [exercises, setExercises] = useState([]);
   const [workoutName, setWorkoutName] = useState("");
   const [isPublic, setIsPublic] = useState(false);
 
+  // store full exercise object instead of id
   const [exerciseBlocks, setExerciseBlocks] = useState([
-    { exercise_id: "", sets: [{ reps: "", weight: "", unit: "kg" }] },
+    { exercise: null, sets: [{ reps: "", weight: "", unit: "kg" }] },
   ]);
 
   const [saving, setSaving] = useState(false);
-  const [loadingExercises, setLoadingExercises] = useState(false);
+  const [loadingInit, setLoadingInit] = useState(false);
   const [pageError, setPageError] = useState("");
 
-  // keep cached app user id (Users.id)
   const [appUserId, setAppUserId] = useState(null);
+  const [muscleOptions, setMuscleOptions] = useState([]);
 
-  // quick lookup for exercise name by id (for workout json)
-  const exById = useMemo(() => {
-    const m = new Map();
-    for (const ex of exercises) m.set(String(ex.id), ex);
-    return m;
-  }, [exercises]);
+  // toast instead of alert
+  const [showSavedToast, setShowSavedToast] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadInit = async () => {
-      setLoadingExercises(true);
+      setLoadingInit(true);
       setPageError("");
 
       try {
@@ -54,7 +59,6 @@ export default function LogWorkoutPage() {
         let userRow = existing;
 
         if (!userRow) {
-          // create if missing
           const defaultName = authEmail ? authEmail.split("@")[0] : "User";
 
           const { data: inserted, error: insErr } = await supabase
@@ -72,23 +76,25 @@ export default function LogWorkoutPage() {
           userRow = inserted;
         }
 
-        // 3) load exercises from DB
-        const { data: exRows, error: exErr } = await supabase
+        // 3) load muscle groups only
+        const { data: mgRows, error: mgErr } = await supabase
           .from("Exercises")
-          .select("id, name, muscle_group")
-          .order("name", { ascending: true });
+          .select("muscle_group")
+          .not("muscle_group", "is", null);
 
-        if (exErr) throw exErr;
+        if (mgErr) throw mgErr;
+
+        const uniq = Array.from(new Set((mgRows || []).map((r) => r.muscle_group))).sort();
 
         if (!isMounted) return;
 
         setAppUserId(userRow.id);
-        setExercises(exRows ?? []);
+        setMuscleOptions(uniq);
       } catch (e) {
         if (!isMounted) return;
-        setPageError(e?.message || "Failed to load exercises.");
+        setPageError(e?.message || "Failed to initialize page.");
       } finally {
-        if (isMounted) setLoadingExercises(false);
+        if (isMounted) setLoadingInit(false);
       }
     };
 
@@ -101,7 +107,7 @@ export default function LogWorkoutPage() {
   const addExerciseBlock = () => {
     setExerciseBlocks((prev) => [
       ...prev,
-      { exercise_id: "", sets: [{ reps: "", weight: "", unit: "kg" }] },
+      { exercise: null, sets: [{ reps: "", weight: "", unit: "kg" }] },
     ]);
   };
 
@@ -109,9 +115,9 @@ export default function LogWorkoutPage() {
     setExerciseBlocks((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const changeExerciseId = (index, value) => {
+  const changeExercise = (index, exObj) => {
     setExerciseBlocks((prev) =>
-      prev.map((block, i) => (i === index ? { ...block, exercise_id: value } : block))
+      prev.map((block, i) => (i === index ? { ...block, exercise: exObj } : block))
     );
   };
 
@@ -141,7 +147,9 @@ export default function LogWorkoutPage() {
         i === blockIndex
           ? {
               ...block,
-              sets: block.sets.map((set, si) => (si === setIndex ? { ...set, [field]: value } : set)),
+              sets: block.sets.map((set, si) =>
+                si === setIndex ? { ...set, [field]: value } : set
+              ),
             }
           : block
       )
@@ -157,17 +165,16 @@ export default function LogWorkoutPage() {
     }
 
     if (!workoutName.trim()) {
-      alert("Please enter a workout name");
+      setPageError("Please enter a workout name.");
       return;
     }
 
-    // Build cleaned structure
     const cleanedExercises = exerciseBlocks
-      .filter((b) => b.exercise_id)
+      .filter((b) => b.exercise?.id)
       .map((b) => ({
-        exercise_id: Number(b.exercise_id),
-        exercise_name: exById.get(String(b.exercise_id))?.name ?? "Exercise",
-        muscle_group: exById.get(String(b.exercise_id))?.muscle_group ?? null,
+        exercise_id: Number(b.exercise.id),
+        exercise_name: b.exercise.name,
+        muscle_group: b.exercise.muscle_group ?? null,
         sets: b.sets
           .filter((s) => s.reps && s.weight)
           .map((s) => ({
@@ -179,35 +186,30 @@ export default function LogWorkoutPage() {
       .filter((b) => b.sets.length > 0);
 
     if (cleanedExercises.length === 0) {
-      alert("Add at least one exercise with one set");
+      setPageError("Add at least one exercise with one set.");
       return;
     }
 
     setSaving(true);
 
     try {
-      // 1) Insert into Workouts (data jsonb)
+      // 1) Workouts jsonb
       const workoutData = {
         exercises: cleanedExercises,
         createdAt: new Date().toISOString(),
       };
 
-      const { error: wErr } = await supabase
-        .from("Workouts")
-        .insert({
-          user_id: appUserId,
-          name: workoutName.trim(),
-          data: workoutData,
-          is_public: isPublic,
-        });
+      const { error: wErr } = await supabase.from("Workouts").insert({
+        user_id: appUserId,
+        name: workoutName.trim(),
+        data: workoutData,
+        is_public: isPublic,
+      });
 
       if (wErr) throw wErr;
 
-
-      // 2) Insert into ExerciseLog (1 row per set)
-      // ExerciseLog has: user_id(uuid), exercise_id(bigint), date(date), sets(int), reps(int), weight(numeric)
-      // We'll store each set as 1 row, sets=1
-      const todayKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      // 2) ExerciseLog (1 row per set) with LOCAL date key
+      const todayKey = getLocalDateKey();
 
       const logRows = [];
       for (const ex of cleanedExercises) {
@@ -226,16 +228,18 @@ export default function LogWorkoutPage() {
       const { error: logErr } = await supabase.from("ExerciseLog").insert(logRows);
       if (logErr) throw logErr;
 
-      alert("Workout saved!");
+      // ✅ Toast + refresh header
+      setShowSavedToast(true);
+      window.dispatchEvent(new Event("workout_saved"));
+      setTimeout(() => setShowSavedToast(false), 2000);
 
       // reset
       setWorkoutName("");
       setIsPublic(false);
-      setExerciseBlocks([{ exercise_id: "", sets: [{ reps: "", weight: "", unit: "kg" }] }]);
+      setExerciseBlocks([{ exercise: null, sets: [{ reps: "", weight: "", unit: "kg" }] }]);
     } catch (err) {
       console.error(err);
       setPageError(err?.message || "Error saving workout");
-      alert("Error saving workout");
     } finally {
       setSaving(false);
     }
@@ -259,32 +263,33 @@ export default function LogWorkoutPage() {
         </div>
 
         <label className={styles.checkboxLabel}>
-          <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+          />
           Make this workout public (visible to other users)
         </label>
       </div>
 
-      {loadingExercises && <div className={sharedStyles.loading}>Loading exercises...</div>}
+      {loadingInit && <div className={sharedStyles.loading}>Loading...</div>}
 
       {exerciseBlocks.map((block, i) => (
         <div key={i} className={styles.exerciseBlock}>
           <div className={styles.exerciseHeader}>
-            <select
-              value={block.exercise_id}
-              onChange={(e) => changeExerciseId(i, e.target.value)}
-              className={`${sharedStyles.select} ${styles.exerciseSelect}`}
-              disabled={loadingExercises}
-            >
-              <option value="">-- choose exercise --</option>
-              {exercises.map((ex) => (
-                <option key={ex.id} value={ex.id}>
-                  {ex.name} ({ex.muscle_group})
-                </option>
-              ))}
-            </select>
+            <ExercisePicker
+              valueExercise={block.exercise}
+              onPickExercise={(ex) => changeExercise(i, ex)}
+              disabled={loadingInit}
+              muscleOptions={muscleOptions}
+            />
 
             {exerciseBlocks.length > 1 && (
-              <button type="button" onClick={() => removeExerciseBlock(i)} className={styles.removeButton}>
+              <button
+                type="button"
+                onClick={() => removeExerciseBlock(i)}
+                className={styles.removeButton}
+              >
                 Remove exercise
               </button>
             )}
@@ -321,14 +326,22 @@ export default function LogWorkoutPage() {
                 </select>
 
                 {block.sets.length > 1 && (
-                  <button type="button" onClick={() => removeSetFromBlock(i, si)} className={styles.removeButton}>
+                  <button
+                    type="button"
+                    onClick={() => removeSetFromBlock(i, si)}
+                    className={styles.removeButton}
+                  >
                     Remove
                   </button>
                 )}
               </div>
             ))}
 
-            <button type="button" onClick={() => addSetToBlock(i)} className={styles.addButton}>
+            <button
+              type="button"
+              onClick={() => addSetToBlock(i)}
+              className={styles.addButton}
+            >
               + Add set
             </button>
           </div>
@@ -343,12 +356,57 @@ export default function LogWorkoutPage() {
         <button
           type="button"
           onClick={handleSaveWorkout}
-          disabled={saving || loadingExercises}
+          disabled={saving || loadingInit}
           className={sharedStyles.primaryButton}
         >
           {saving ? "Saving..." : "Save workout"}
         </button>
       </div>
+
+      {/* ✅ Toast (no alert) */}
+{showSavedToast && (
+  <div
+    style={{
+      position: "fixed",
+      top: 16,
+      left: "50%",
+      transform: "translateX(-50%)", // ✅ keep centering always
+      background: "#0f172a",
+      color: "white",
+      padding: "16px 26px",
+      borderRadius: 16,
+      boxShadow: "0 14px 40px rgba(0,0,0,0.35)",
+      fontSize: 17,
+      fontWeight: 700,
+      zIndex: 9999,
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      border: "1px solid rgba(255,255,255,0.15)",
+      minWidth: 320,
+      justifyContent: "center",
+
+      animation: "toastSlideDown 0.35s ease-out",
+    }}
+  >
+    <span style={{ fontSize: 22 }}>✅</span>
+    <span>Workout saved!</span>
+
+    <style>{`
+      @keyframes toastSlideDown {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+    `}</style>
+  </div>
+)}
+
     </div>
   );
 }

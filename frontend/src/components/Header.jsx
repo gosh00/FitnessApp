@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import "./Header.css";
 import { supabase } from "../supabaseClient";
 
-const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const Header = ({ setPage, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
+
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [userStats, setUserStats] = useState({
     displayName: "User",
@@ -15,94 +16,109 @@ const Header = () => {
     levelProgressPct: 0,
   });
 
+  // ✅ Go to Profile (your app navigation is state-based)
   const goToProfile = () => {
-    // сменя страницата директно
-    window.location.href = "/profile";
+    setIsProfileOpen(false);
+    setPage?.("profile");
   };
 
+  // ✅ Logout handled by App.jsx
   const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      window.location.href = "/"; // към login/home
-    } catch (err) {
-      alert("Logout failed: " + (err?.message || err));
-    }
+    setIsProfileOpen(false);
+    await onLogout?.();
   };
 
   useEffect(() => {
-    let isMounted = true;
+  let isMounted = true;
 
-    const loadHeaderStats = async () => {
-      setLoading(true);
-      setPageError("");
+  const loadHeaderStats = async () => {
+    setLoading(true);
+    setPageError("");
 
-      try {
-        const { data: authRes, error: authErr } = await supabase.auth.getUser();
-        if (authErr) throw authErr;
-        if (!authRes?.user) throw new Error("No logged-in user.");
+    try {
+      const { data: authRes, error: authErr } = await supabase.auth.getUser();
+      if (authErr) throw authErr;
+      if (!authRes?.user) throw new Error("No logged-in user.");
 
-        const authUser = authRes.user;
+      const authUser = authRes.user;
 
-        const { data: userRow, error: uErr } = await supabase
-          .from("Users")
-          .select("id, auth_id, display_name, avatar_url")
-          .eq("auth_id", authUser.id)
-          .maybeSingle();
+      const { data: userRow, error: uErr } = await supabase
+        .from("Users")
+        .select("id, auth_id, display_name, avatar_url")
+        .eq("auth_id", authUser.id)
+        .maybeSingle();
 
-        if (uErr) throw uErr;
-        if (!userRow) throw new Error("No Users row found.");
+      if (uErr) throw uErr;
+      if (!userRow) throw new Error("No Users row found.");
 
-        const appUserId = userRow.id;
+      const appUserId = userRow.id;
 
-        const displayName = userRow.display_name || authUser.email || "User";
-        const avatarUrl = userRow.avatar_url || null;
+      const displayName = userRow.display_name || authUser.email || "User";
+      const avatarUrl = userRow.avatar_url || null;
 
-        const { count: workoutsCount, error: wcErr } = await supabase
-          .from("Workouts")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", appUserId);
+      const { count: workoutsCount, error: wcErr } = await supabase
+        .from("Workouts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", appUserId);
 
-        if (wcErr) throw wcErr;
+      if (wcErr) throw wcErr;
 
-        const workouts = workoutsCount ?? 0;
-        const workoutsPerLevel = 5;
-        const level = Math.max(1, 1 + Math.floor(workouts / workoutsPerLevel));
-        const withinLevel = workouts % workoutsPerLevel;
-        const levelProgressPct = Math.round((withinLevel / workoutsPerLevel) * 100);
+      const workouts = workoutsCount ?? 0;
+      const workoutsPerLevel = 5;
+      const level = Math.max(1, 1 + Math.floor(workouts / workoutsPerLevel));
+      const withinLevel = workouts % workoutsPerLevel;
+      const levelProgressPct = Math.round((withinLevel / workoutsPerLevel) * 100);
 
-        const { data: logs, error: lErr } = await supabase
-          .from("ExerciseLog")
-          .select("date")
-          .eq("user_id", appUserId);
+      const { data: logs, error: lErr } = await supabase
+        .from("ExerciseLog")
+        .select("date")
+        .eq("user_id", appUserId);
 
-        if (lErr) throw lErr;
+      if (lErr) throw lErr;
 
-        const streak = calcStreakDaysFromLogs(logs ?? []);
+      const streak = calcStreakDaysFromLogs(logs ?? []);
 
-        if (!isMounted) return;
+      if (!isMounted) return;
 
-        setUserStats({
-          displayName,
-          avatarUrl,
-          streak,
-          level,
-          levelProgressPct,
-        });
-      } catch (e) {
-        if (!isMounted) return;
-        setPageError(e?.message || "Failed to load header stats.");
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+      setUserStats({
+        displayName,
+        avatarUrl,
+        streak,
+        level,
+        levelProgressPct,
+      });
+    } catch (e) {
+      if (!isMounted) return;
+      setPageError(e?.message || "Failed to load header stats.");
+    } finally {
+      if (isMounted) setLoading(false);
+    }
+  };
+
+  // initial load
+  loadHeaderStats();
+
+  // refresh after saving workout
+  const onSaved = () => loadHeaderStats();
+  window.addEventListener("workout_saved", onSaved);
+
+  return () => {
+    isMounted = false;
+    window.removeEventListener("workout_saved", onSaved);
+  };
+}, []);
+
+  // close dropdown when clicking outside
+  useEffect(() => {
+    const onDown = (e) => {
+      if (!isProfileOpen) return;
+      const target = e.target;
+      if (target.closest?.(".profile-area")) return;
+      setIsProfileOpen(false);
     };
-
-    loadHeaderStats();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [isProfileOpen]);
 
   const initials = useMemo(() => {
     const n = (userStats.displayName || "").trim();
@@ -114,10 +130,10 @@ const Header = () => {
   return (
     <header className="header">
       <div className="header-container header-compact">
-        {/* LEFT */}
-        <div className="header-left header-left-profile">
+        {/* LEFT: Profile + dropdown + Level */}
+        <div className="header-left header-left-profile profile-area" style={{ position: "relative" }}>
           <button
-            onClick={goToProfile}
+            onClick={() => setIsProfileOpen((v) => !v)}
             className="profile-chip"
             style={{
               background: "transparent",
@@ -137,9 +153,38 @@ const Header = () => {
               <div className="profile-avatar fallback">{initials}</div>
             )}
             <span className="profile-name">{userStats.displayName}</span>
+            <span style={{ fontSize: 12, opacity: 0.8 }}>▾</span>
           </button>
 
-          <div className="user-level compact">
+          {isProfileOpen && (
+            <div
+              className="profile-dropdown"
+              style={{
+                position: "absolute",
+                top: "calc(100% + 8px)",
+                left: 0,
+                minWidth: 200,
+                background: "white",
+                border: "1px solid rgba(0,0,0,0.08)",
+                borderRadius: 10,
+                boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+                overflow: "hidden",
+                zIndex: 50,
+              }}
+            >
+              <button onClick={goToProfile} style={dropdownBtnStyle}>
+                👤 Profile
+              </button>
+
+              <div style={{ height: 1, background: "rgba(0,0,0,0.06)" }} />
+
+              <button onClick={handleLogout} style={{ ...dropdownBtnStyle, color: "#B00020" }}>
+                🚪 Logout
+              </button>
+            </div>
+          )}
+
+          <div className="user-level compact" style={{ marginTop: 8 }}>
             <span className="level-label">Level {userStats.level}</span>
             <div className="level-progress">
               <div className="level-fill" style={{ width: `${userStats.levelProgressPct}%` }} />
@@ -147,108 +192,62 @@ const Header = () => {
           </div>
         </div>
 
-        {/* CENTER */}
+        {/* CENTER: Logo text */}
         <div className="header-center">
-          <h1 className="app-title">Fitness Pro</h1>
-          <p className="app-subtitle">Track Your Gym Progression</p>
-          {loading && <p style={{ fontSize: 12 }}>Loading…</p>}
-          {pageError && <p style={{ fontSize: 12, color: "salmon" }}>{pageError}</p>}
+          <div className="header-logo-text">
+            Trainify<span className="header-logo-dot"></span>
+          </div>
+          <div className="header-logo-tagline">Fitness Tracking</div>
+          {loading && <p style={{ fontSize: 12, marginTop: 6 }}>Loading…</p>}
+          {pageError && <p style={{ fontSize: 12, marginTop: 6, color: "salmon" }}>{pageError}</p>}
         </div>
 
-        {/* RIGHT */}
+        {/* RIGHT: Streak only */}
         <div className="header-right header-right-streak">
-          <div className="streak-badge">
+          <div className={`streak-badge ${userStats.streak > 0 ? "active" : ""}`}>
             <span className="streak-icon">🔥</span>
             <span className="streak-count">{userStats.streak} days</span>
           </div>
-
-          {/* ✅ LOGOUT BUTTON (desktop) */}
-          <button
-            onClick={handleLogout}
-            className="logout-btn"
-            style={{
-              marginLeft: 12,
-              padding: "6px 12px",
-              borderRadius: 8,
-              border: "1px solid #ccc",
-              background: "white",
-              cursor: "pointer",
-              fontSize: 12,
-              whiteSpace: "nowrap",
-            }}
-          >
-            Logout
-          </button>
-
-          <button className="mobile-menu-btn" onClick={() => setIsMenuOpen((v) => !v)}>
-            <i className={`fas ${isMenuOpen ? "fa-times" : "fa-bars"}`} />
-          </button>
-        </div>
-      </div>
-
-      {/* MOBILE MENU */}
-      <div className={`mobile-menu ${isMenuOpen ? "open" : ""}`}>
-        <div className="mobile-stats">
-          <button
-            onClick={goToProfile}
-            style={{
-              background: "transparent",
-              border: "none",
-              padding: 0,
-              width: "100%",
-              textAlign: "left",
-              cursor: "pointer",
-            }}
-          >
-            <div className="mobile-stat">
-              <span className="mobile-stat-icon">👤</span>
-              <div className="mobile-stat-info">
-                <span className="mobile-stat-value">{userStats.displayName}</span>
-                <span className="mobile-stat-label">Profile</span>
-              </div>
-            </div>
-          </button>
-
-          {/* ✅ LOGOUT BUTTON (mobile) */}
-          <button
-            onClick={handleLogout}
-            style={{
-              background: "transparent",
-              border: "none",
-              padding: 0,
-              width: "100%",
-              textAlign: "left",
-              cursor: "pointer",
-              marginTop: 10,
-            }}
-          >
-            <div className="mobile-stat">
-              <span className="mobile-stat-icon">🚪</span>
-              <div className="mobile-stat-info">
-                <span className="mobile-stat-value">Logout</span>
-                <span className="mobile-stat-label">Sign out</span>
-              </div>
-            </div>
-          </button>
         </div>
       </div>
     </header>
   );
 };
 
+const dropdownBtnStyle = {
+  width: "100%",
+  textAlign: "left",
+  padding: "10px 12px",
+  background: "white",
+  border: "none",
+  cursor: "pointer",
+  fontSize: 13,
+};
+
 function calcStreakDaysFromLogs(logs) {
-  const days = new Set(logs.map((l) => l.date).filter(Boolean));
+  const days = new Set((logs || []).map((l) => l?.date).filter(Boolean));
   let streak = 0;
 
-  for (let i = 0; ; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    if (days.has(key)) streak++;
-    else break;
+  // start from today (LOCAL), go backwards while there's a workout day
+  const d = new Date();
+  d.setHours(12, 0, 0, 0); // midday avoids DST edge cases
+
+  while (true) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const key = `${y}-${m}-${day}`;
+
+    if (days.has(key)) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else {
+      break;
+    }
   }
 
   return streak;
 }
+
 
 export default Header;
