@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import styles from "./ExercisesPage.module.css";
 import sharedStyles from "../styles/shared.module.css";
-import AdminAddExercise from "../components/AdminAddExercise";
 
 // ---- helpers for YouTube ----
 function isYouTube(url = "") {
@@ -95,7 +94,6 @@ export default function ExercisesPage() {
       </div>
 
       {/* (Optional) Admin form - show it always, or later limit by email */}
-      <AdminAddExercise onAdded={loadExercises} />
 
       {pageError && <div style={{ color: "red", marginTop: 8 }}>{pageError}</div>}
 

@@ -1,290 +1,324 @@
 import { useEffect, useState } from "react";
 import "./HomePage.css";
-import { supabase } from "../supabaseClient"; // ✅ коригирай пътя ако файлът е другаде
+import { supabase } from "../supabaseClient";
 
 const HomePage = () => {
   const [loading, setLoading] = useState(true);
-  const [pageError, setPageError] = useState("");
-
-  const [displayName, setDisplayName] = useState("User");
-
-  const [stats, setStats] = useState({
+  const [userStats, setUserStats] = useState({
+    displayName: "User",
     totalWorkouts: 0,
-    caloriesBurned: 0,
-    personalRecords: 0,
-    streakDays: 0,
-    muscleGroups: [],
+    streak: 0,
+    level: 1,
+    weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
+    recentWorkouts: [],
   });
-
-  const [workouts, setWorkouts] = useState([]);
-  const [badges, setBadges] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
 
-    const load = async () => {
+    const loadStats = async () => {
       setLoading(true);
-      setPageError("");
 
       try {
-        // 1) auth user
         const { data: authRes, error: authErr } = await supabase.auth.getUser();
         if (authErr) throw authErr;
         if (!authRes?.user) throw new Error("No logged-in user.");
 
-        const authId = authRes.user.id;
+        const authUser = authRes.user;
 
-        // 2) app user row (Users table)
-        const { data: appUser, error: appUserErr } = await supabase
+        const { data: userRow, error: uErr } = await supabase
           .from("Users")
-          .select("id, display_name, auth_id")
-          .eq("auth_id", authId)
-          .single();
+          .select("id, auth_id, display_name")
+          .eq("auth_id", authUser.id)
+          .maybeSingle();
 
-        if (appUserErr) throw appUserErr;
+        if (uErr) throw uErr;
+        if (!userRow) throw new Error("No Users row found.");
 
-        const appUserId = appUser.id;
-        if (isMounted) setDisplayName(appUser.display_name || "User");
+        const appUserId = userRow.id;
+        const displayName = userRow.display_name || authUser.email || "User";
 
-        // 3) recent workouts (Workouts)
-        const { data: workoutsRows, error: workoutsErr } = await supabase
-          .from("Workouts")
-          .select("id, name, data, created_at")
-          .eq("user_id", appUserId)
-          .order("created_at", { ascending: false })
-          .limit(4);
-
-        if (workoutsErr) throw workoutsErr;
-
-        const mappedWorkouts = (workoutsRows ?? []).map((w) => {
-          const parsed = parseWorkoutData(w.data);
-          return {
-            id: w.id,
-            name: w.name || "Workout",
-            date: formatRelativeDate(w.created_at),
-            duration: parsed.duration ?? "—",
-            exercises: parsed.exercisesCount ?? 0,
-            calories: parsed.calories ?? 0,
-          };
-        });
-
-        // 4) badges (UserBadges)
-        const { data: badgeRows, error: badgesErr } = await supabase
-          .from("UserBadges")
-          .select("id, title, earned_at")
-          .eq("user_id", appUserId)
-          .order("earned_at", { ascending: false })
-          .limit(3);
-
-        if (badgesErr) throw badgesErr;
-
-        // 5) ExerciseLog (за streak + muscle groups)
-        const { data: logs, error: logsErr } = await supabase
-          .from("ExerciseLog")
-          .select("date, exercise_id")
-          .eq("user_id", appUserId);
-
-        if (logsErr) throw logsErr;
-
-        // muscle groups
-        const exerciseIds = Array.from(
-          new Set((logs ?? []).map((l) => l.exercise_id).filter(Boolean))
-        );
-
-        let muscleGroups = [];
-
-        if (exerciseIds.length) {
-          const { data: exRows, error: exErr } = await supabase
-            .from("Exercises")
-            .select("id, muscle_group")
-            .in("id", exerciseIds);
-
-          if (exErr) throw exErr;
-
-          muscleGroups = Array.from(
-            new Set((exRows ?? []).map((e) => e.muscle_group).filter(Boolean))
-          );
-        }
-
-        // total workouts count
-        const { count: workoutsCount, error: countErr } = await supabase
+        const { count: workoutsCount, error: wcErr } = await supabase
           .from("Workouts")
           .select("id", { count: "exact", head: true })
           .eq("user_id", appUserId);
 
-        if (countErr) throw countErr;
+        if (wcErr) throw wcErr;
 
-        const streakDays = calcStreakDaysFromLogs(logs ?? []);
-        const personalRecords = (badgeRows ?? []).length;
+        const totalWorkouts = workoutsCount ?? 0;
+        const workoutsPerLevel = 5;
+        const level = Math.max(1, 1 + Math.floor(totalWorkouts / workoutsPerLevel));
+
+        const { data: logs, error: lErr } = await supabase
+          .from("ExerciseLog")
+          .select("date")
+          .eq("user_id", appUserId);
+
+        if (lErr) throw lErr;
+
+        const streak = calcStreakDaysFromLogs(logs ?? []);
+        const weeklyActivity = calculateWeeklyActivity(logs ?? []);
+
+        const { data: recentWorkouts, error: rwErr } = await supabase
+          .from("Workouts")
+          .select("id, name, created_at")
+          .eq("user_id", appUserId)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (rwErr) throw rwErr;
 
         if (!isMounted) return;
 
-        setWorkouts(mappedWorkouts);
-        setBadges(badgeRows ?? []);
-        setStats({
-          totalWorkouts: workoutsCount ?? 0,
-          caloriesBurned: sumCaloriesFromWorkouts(workoutsRows ?? []),
-          personalRecords,
-          streakDays,
-          muscleGroups,
+        setUserStats({
+          displayName,
+          totalWorkouts,
+          streak,
+          level,
+          weeklyActivity,
+          recentWorkouts: recentWorkouts || [],
         });
       } catch (e) {
-        if (!isMounted) return;
-        setPageError(e?.message || "Failed to load home data.");
+        console.error("Failed to load stats:", e);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
 
-    load();
+    loadStats();
     return () => {
       isMounted = false;
     };
   }, []);
 
+  if (loading) {
+    return (
+      <div className="home-page">
+        <div className="loading-container">
+          <div className="loader"></div>
+          <p>Loading your fitness journey...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="home-page">
-      {/* Hero */}
+      {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">
-          <h1 className="hero-title">Welcome Back, {displayName}! 👋</h1>
+          <h1 className="hero-title">
+            Welcome back, <span className="highlight">{userStats.displayName}</span>
+          </h1>
           <p className="hero-subtitle">
-            You're on a <span className="highlight">{stats.streakDays} day streak</span> - keep crushing it!
+            Your fitness journey continues. Track, analyze, and conquer your goals.
           </p>
+          <p className="hero-description">
+            Every workout brings you closer to becoming the best version of yourself. 
+            With comprehensive tracking, intelligent insights, and personalized recommendations, 
+            Trainify empowers you to achieve sustainable fitness results.
+          </p>
+        </div>
+      </section>
 
-          <div className="hero-stats">
-            <div className="hero-stat-card">
-              <span className="stat-number">{stats.totalWorkouts}</span>
-              <span className="stat-label">Total Workouts</span>
+      {/* Stats Grid */}
+      <section className="stats-section">
+        <div className="stats-grid">
+          <div className="stat-card stat-primary">
+            <div className="stat-icon">💪</div>
+            <div className="stat-content">
+              <h3 className="stat-value">{userStats.totalWorkouts}</h3>
+              <p className="stat-label">Total Workouts</p>
             </div>
-            <div className="hero-stat-card">
-              <span className="stat-number">{Number(stats.caloriesBurned).toLocaleString()}</span>
-              <span className="stat-label">Calories Burned</span>
+            <div className="stat-sparkle"></div>
+          </div>
+
+          <div className="stat-card stat-streak">
+            <div className="stat-icon">🔥</div>
+            <div className="stat-content">
+              <h3 className="stat-value">{userStats.streak}</h3>
+              <p className="stat-label">Day Streak</p>
             </div>
-            <div className="hero-stat-card">
-              <span className="stat-number">{stats.personalRecords}</span>
-              <span className="stat-label">Personal Records</span>
+            <div className="stat-sparkle"></div>
+          </div>
+
+          <div className="stat-card stat-level">
+            <div className="stat-icon">⭐</div>
+            <div className="stat-content">
+              <h3 className="stat-value">{userStats.level}</h3>
+              <p className="stat-label">Current Level</p>
             </div>
+            <div className="stat-sparkle"></div>
           </div>
         </div>
       </section>
 
-      {/* ✅ Recent Workouts (така workouts вече се използва и warning изчезва) */}
-      <section className="activity-section">
-        <div className="section-header">
+      {/* Weekly Activity & Achievement in 2 Columns */}
+      <div className="content-grid">
+        {/* Weekly Activity Chart */}
+        <div className="content-grid-item">
+          <h2 className="section-title">Weekly Activity</h2>
+          <p className="section-subtitle">
+            Consistency is key to achieving your fitness goals. Track your daily workout frequency 
+            and maintain momentum throughout the week.
+          </p>
+          <div className="activity-chart">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => (
+              <div key={day} className="activity-bar-container">
+                <div className="activity-bar-wrapper">
+                  <div
+                    className="activity-bar"
+                    style={{
+                      height: `${Math.max(10, userStats.weeklyActivity[index] * 20)}%`,
+                    }}
+                  >
+                    <span className="activity-count">{userStats.weeklyActivity[index]}</span>
+                  </div>
+                </div>
+                <span className="activity-day">{day}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Achievement Showcase */}
+        <div className="content-grid-item">
+          <h2 className="section-title">Your Progress Journey</h2>
+          <p className="section-subtitle">
+            Level up your fitness game! Complete workouts to earn experience points, unlock achievements, 
+            and climb the ranks. Every session counts toward your next milestone.
+          </p>
+          <div className="achievement-showcase">
+            <div className="achievement-circle">
+              <svg className="progress-ring" width="160" height="160">
+                <circle
+                  className="progress-ring-bg"
+                  cx="80"
+                  cy="80"
+                  r="65"
+                />
+                <circle
+                  className="progress-ring-fill"
+                  cx="80"
+                  cy="80"
+                  r="65"
+                  style={{
+                    strokeDasharray: `${2 * Math.PI * 65}`,
+                    strokeDashoffset: `${2 * Math.PI * 65 * (1 - (userStats.totalWorkouts % 5) / 5)}`,
+                  }}
+                />
+              </svg>
+              <div className="progress-text">
+                <span className="progress-number">{userStats.totalWorkouts % 5}</span>
+                <span className="progress-label">/ 5</span>
+                <span className="progress-sublabel">to next level</span>
+              </div>
+            </div>
+            <div className="achievement-info">
+              <h3>Level {userStats.level} Athlete</h3>
+              <p>Complete {5 - (userStats.totalWorkouts % 5)} more workouts to reach Level {userStats.level + 1}</p>
+              <div className="milestone-badges">
+                <div className={`badge ${userStats.totalWorkouts >= 10 ? 'unlocked' : 'locked'}`}>
+                  <span className="badge-icon">🏆</span>
+                  <span className="badge-name">Bronze</span>
+                </div>
+                <div className={`badge ${userStats.totalWorkouts >= 25 ? 'unlocked' : 'locked'}`}>
+                  <span className="badge-icon">🥈</span>
+                  <span className="badge-name">Silver</span>
+                </div>
+                <div className={`badge ${userStats.totalWorkouts >= 50 ? 'unlocked' : 'locked'}`}>
+                  <span className="badge-icon">🥇</span>
+                  <span className="badge-name">Gold</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Workouts & About in 2 Columns */}
+      <div className="bottom-grid">
+        {/* Recent Workouts */}
+        <div className="bottom-grid-item">
           <h2 className="section-title">Recent Workouts</h2>
-        </div>
-
-        <div className="workouts-grid">
-          {workouts.map((w) => (
-            <div key={w.id} className="workout-card">
-              <div className="workout-header">
-                <span className="workout-date">{w.date}</span>
-              </div>
-
-              <h3 className="workout-name">{w.name}</h3>
-
-              <div className="workout-stats">
-                <div className="workout-stat">
-                  <span className="stat-icon">⏱️</span>
-                  <span>{w.duration}</span>
+          <p className="section-subtitle">
+            Review your latest training sessions and stay motivated by seeing your progress over time. 
+            Build on your momentum and keep pushing forward.
+          </p>
+          {userStats.recentWorkouts.length > 0 ? (
+            <div className="recent-list">
+              {userStats.recentWorkouts.map((workout, index) => (
+                <div key={workout.id} className="recent-item" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <div className="recent-icon">🏋️</div>
+                  <div className="recent-content">
+                    <h4 className="recent-name">{workout.name}</h4>
+                    <p className="recent-date">
+                      {new Date(workout.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
                 </div>
-                <div className="workout-stat">
-                  <span className="stat-icon">🏋️</span>
-                  <span>{w.exercises} exercises</span>
-                </div>
-                <div className="workout-stat">
-                  <span className="stat-icon">🔥</span>
-                  <span>{w.calories} cal</span>
-                </div>
-              </div>
-
-              <button className="workout-details-btn">View Details</button>
+              ))}
             </div>
-          ))}
-
-          {!workouts.length && !loading && (
-            <p className="hero-subtitle">No workouts yet. Start your first one 💪</p>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-icon">📝</div>
+              <p>No workouts yet. Start your first one!</p>
+            </div>
           )}
         </div>
-      </section>
 
-      {/* Muscle groups */}
-      <section className="progress-section">
-        <h2 className="section-title">Muscle Groups Trained</h2>
-        <div className="muscle-groups">
-          {stats.muscleGroups.map((m, i) => (
-            <div key={i} className="muscle-tag">
-              {m}
-            </div>
-          ))}
-          {!stats.muscleGroups.length && <p className="hero-subtitle">No data yet.</p>}
-        </div>
-      </section>
-
-      {/* Achievements */}
-      <section className="achievements-section">
-        <div className="section-header">
-          <h2 className="section-title">🏆 Recent Achievements</h2>
-        </div>
-
-        <div className="badges-grid">
-          {badges.map((b) => (
-            <div key={b.id} className="badge-card">
-              <span className="badge-icon">🏅</span>
-              <div className="badge-info">
-                <span className="badge-name">{b.title}</span>
-                <span className="badge-date">{formatRelativeDate(b.earned_at)}</span>
+        {/* About App */}
+        <div className="bottom-grid-item">
+          <div className="about-content">
+            <h2 className="about-title">Why Trainify?</h2>
+            <p className="about-text">
+              Trainify is more than just a fitness tracker—it's your personal training companion designed 
+              to transform the way you approach health and wellness. Our platform combines cutting-edge 
+              technology with proven fitness methodologies to deliver a comprehensive solution for athletes 
+              of all levels.
+            </p>
+            <div className="features-grid">
+              <div className="feature">
+                <div className="feature-icon">📊</div>
+                <div>
+                  <h4>Smart Analytics</h4>
+                  <p>
+                    Gain deep insights into your performance with detailed charts, progress tracking, 
+                    and trend analysis.
+                  </p>
+                </div>
+              </div>
+              <div className="feature">
+                <div className="feature-icon">🎯</div>
+                <div>
+                  <h4>Personalized Goals</h4>
+                  <p>
+                    Set custom fitness objectives tailored to your lifestyle and track your progress 
+                    in real-time.
+                  </p>
+                </div>
+              </div>
+              <div className="feature">
+                <div className="feature-icon">🏆</div>
+                <div>
+                  <h4>Gamified Achievements</h4>
+                  <p>
+                    Stay motivated with our reward system. Unlock badges, level up, and compete with 
+                    yourself.
+                  </p>
+                </div>
               </div>
             </div>
-          ))}
-
-          {!badges.length && !loading && (
-            <p className="hero-subtitle">No badges yet — keep going!</p>
-          )}
+          </div>
         </div>
-      </section>
-
-      {loading && <p>Loading...</p>}
-      {pageError && <p style={{ color: "red" }}>{pageError}</p>}
+      </div>
     </div>
   );
 };
-
-// ---------- helpers ----------
-function formatRelativeDate(dateValue) {
-  if (!dateValue) return "—";
-  const d = new Date(dateValue);
-  const today = new Date();
-  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const startD = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diffDays = Math.round((startToday - startD) / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  return `${diffDays} days ago`;
-}
-
-function parseWorkoutData(data) {
-  if (!data || typeof data !== "object") return {};
-  const durationMin = data.durationMinutes ?? data.duration_minutes;
-  const calories = data.calories;
-  const exercisesCount = Array.isArray(data.exercises) ? data.exercises.length : data.exercisesCount;
-
-  return {
-    duration: typeof durationMin === "number" ? `${durationMin} min` : null,
-    calories: typeof calories === "number" ? calories : null,
-    exercisesCount: typeof exercisesCount === "number" ? exercisesCount : null,
-  };
-}
-
-function sumCaloriesFromWorkouts(workoutsRows) {
-  let sum = 0;
-  for (const w of workoutsRows) {
-    const p = parseWorkoutData(w.data);
-    if (typeof p.calories === "number") sum += p.calories;
-  }
-  return sum;
-}
 
 function calcStreakDaysFromLogs(logs) {
   const days = new Set(logs.map((l) => l.date).filter(Boolean));
@@ -297,7 +331,27 @@ function calcStreakDaysFromLogs(logs) {
     if (days.has(key)) streak++;
     else break;
   }
+
   return streak;
+}
+
+function calculateWeeklyActivity(logs) {
+  const activity = [0, 0, 0, 0, 0, 0, 0];
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+
+  logs.forEach((log) => {
+    const logDate = new Date(log.date);
+    const diffDays = Math.floor((today - logDate) / (1000 * 60 * 60 * 24));
+    const weekDay = diffDays - mondayOffset;
+
+    if (weekDay >= 0 && weekDay < 7) {
+      activity[weekDay]++;
+    }
+  });
+
+  return activity;
 }
 
 export default HomePage;

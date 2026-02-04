@@ -54,8 +54,12 @@
 }
 
 .smallSelect {
-  width: 70px;
+  width: 90px;          /* was 70px – too small */
+  min-width: 90px;
+  box-sizing: border-box;
+  padding-right: 28px; /* space for the arrow */
 }
+
 
 .addButton {
   background-color: #6E8387;
