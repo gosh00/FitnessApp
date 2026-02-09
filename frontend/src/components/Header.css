@@ -1,14 +1,32 @@
-/* Header.css */
+/* Header.css (UPDATED COLORS - premium dark + consistent accent) */
+
+:root {
+  --bg-main: #0f0f10;
+  --bg-card: #18181b;
+  --bg-card-2: #151518;
+
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --border-mid: rgba(255, 255, 255, 0.12);
+
+  --text-main: #f5f5f5;
+  --text-muted: rgba(245, 245, 245, 0.65);
+
+  --accent: #e11d2e;
+  --accent-deep: #b91c1c;
+  --accent-glow: rgba(225, 29, 46, 0.55);
+}
+
+/* ================= HEADER ================= */
 
 .header {
-  background: linear-gradient(135deg, #0D0221 0%, #1a0a3e 100%);
-  color: #FFFFF3;
+  background: linear-gradient(135deg, #1b1b1f 0%, #141417 100%);
+  color: var(--text-main);
   padding: 16px 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid rgba(132, 130, 143, 0.2);
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .header-container {
@@ -24,7 +42,8 @@
   padding: 8px 0;
 }
 
-/* LEFT SECTION - Profile Area */
+/* ================= LEFT SECTION ================= */
+
 .header-left {
   display: flex;
   flex-direction: column;
@@ -37,22 +56,22 @@
 }
 
 .profile-chip {
-  background: rgba(255, 255, 243, 0.08) !important;
-  border: 1px solid rgba(132, 130, 143, 0.3) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid var(--border-mid) !important;
   border-radius: 50px !important;
   padding: 8px 16px 8px 8px !important;
   cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
-  transition: all 0.3s ease !important;
-  color: #FFFFF3 !important;
+  transition: all 0.25s ease !important;
+  color: var(--text-main) !important;
   font: inherit !important;
 }
 
 .profile-chip:hover {
-  background: rgba(255, 255, 243, 0.12) !important;
-  border-color: rgba(132, 130, 143, 0.5) !important;
+  background: rgba(255, 255, 255, 0.09) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
   transform: translateY(-1px);
 }
 
@@ -61,8 +80,9 @@
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(132, 130, 143, 0.4);
-  background: linear-gradient(135deg, #84828F 0%, #5a5868 100%);
+
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
 }
 
 .profile-avatar.fallback {
@@ -71,29 +91,30 @@
   justify-content: center;
   font-size: 16px;
   font-weight: 700;
-  color: #FFFFF3;
-  background: linear-gradient(135deg, #84828F 0%, #5a5868 100%);
+  color: var(--text-main);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
 }
 
 .profile-name {
   font-size: 15px;
   font-weight: 600;
-  color: #FFFFF3;
+  color: var(--text-main);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 150px;
 }
 
+/* dropdown stays white (good contrast), just soften border + danger red */
 .profile-dropdown {
   position: absolute !important;
   top: calc(100% + 8px) !important;
   left: 0 !important;
   min-width: 200px !important;
-  background: #FFFFF3 !important;
-  border: 1px solid rgba(13, 2, 33, 0.1) !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
   border-radius: 12px !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 14px 50px rgba(0, 0, 0, 0.25) !important;
   overflow: hidden !important;
   z-index: 50 !important;
   animation: dropdownSlide 0.2s ease;
@@ -119,7 +140,7 @@
   cursor: pointer !important;
   font-size: 14px !important;
   font-weight: 500 !important;
-  color: #0D0221 !important;
+  color: #111827 !important;
   transition: background 0.2s ease !important;
   display: flex !important;
   align-items: center !important;
@@ -127,18 +148,19 @@
 }
 
 .profile-dropdown button:hover {
-  background: rgba(13, 2, 33, 0.05) !important;
+  background: rgba(17, 24, 39, 0.05) !important;
 }
 
 .profile-dropdown button:last-child {
-  color: #dc2626 !important;
+  color: var(--accent) !important;
 }
 
 .profile-dropdown button:last-child:hover {
-  background: rgba(220, 38, 38, 0.08) !important;
+  background: rgba(225, 29, 46, 0.08) !important;
 }
 
-/* User Level */
+/* ================= USER LEVEL ================= */
+
 .user-level {
   width: 100%;
   max-width: 200px;
@@ -151,7 +173,7 @@
 .level-label {
   font-size: 12px;
   font-weight: 700;
-  color: #84828F;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   display: block;
@@ -161,21 +183,22 @@
 .level-progress {
   width: 100%;
   height: 6px;
-  background: rgba(255, 255, 243, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(132, 130, 143, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .level-fill {
   height: 100%;
-  background: linear-gradient(90deg, #84828F 0%, #a8a6b3 100%);
+  background: linear-gradient(90deg, var(--accent) 0%, #ff465a 100%);
   border-radius: 10px;
   transition: width 0.5s ease;
-  box-shadow: 0 0 8px rgba(132, 130, 143, 0.5);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
-/* CENTER SECTION - Logo */
+/* ================= CENTER SECTION ================= */
+
 .header-center {
   display: flex;
   flex-direction: column;
@@ -187,9 +210,9 @@
 .header-logo-text {
   font-size: 42px;
   font-weight: 800;
-  color: #FFFFF3;
+  color: var(--text-main);
   letter-spacing: -0.5px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 10px 26px rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: flex-end;
   gap: 4px;
@@ -200,22 +223,22 @@
 .header-logo-dot {
   width: 10px;
   height: 10px;
-  background: #dc2626;
+  background: var(--accent);
   border-radius: 50%;
   display: inline-block;
-  box-shadow: 0 0 16px rgba(220, 38, 38, 0.9), 0 0 4px rgba(220, 38, 38, 1);
+  box-shadow: 0 0 18px rgba(225, 29, 46, 0.9), 0 0 6px rgba(225, 29, 46, 1);
   margin-bottom: 2px;
   flex-shrink: 0;
 }
 
 .header-logo-tagline {
   font-size: 11px;
-  color: #84828F;
+  color: var(--text-muted);
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-top: 6px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .header-center img {
@@ -225,17 +248,18 @@
   object-fit: contain !important;
   display: block !important;
   margin: 0 auto !important;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.55));
 }
 
 .header-center p {
   margin: 4px 0 0 0 !important;
   font-size: 11px !important;
-  color: #84828F !important;
+  color: var(--text-muted) !important;
   font-weight: 500 !important;
 }
 
-/* RIGHT SECTION - Streak */
+/* ================= RIGHT SECTION ================= */
+
 .header-right {
   display: flex;
   justify-content: flex-end;
@@ -246,32 +270,33 @@
   justify-content: flex-end;
 }
 
+/* Streak badge becomes a clean chip; active state uses accent glow */
 .streak-badge {
-  background: linear-gradient(135deg, rgba(255, 255, 243, 0.12) 0%, rgba(132, 130, 143, 0.08) 100%);
-  border: 1px solid rgba(132, 130, 143, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 50px;
   padding: 10px 20px;
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  transition: all 0.25s ease;
 }
 
 .streak-badge.active {
-  background: linear-gradient(135deg, rgba(255, 123, 0, 0.2) 0%, rgba(220, 38, 38, 0.15) 100%);
-  border-color: rgba(255, 123, 0, 0.5);
-  box-shadow: 0 4px 20px rgba(255, 123, 0, 0.4), 0 0 30px rgba(255, 123, 0, 0.2);
+  background: rgba(225, 29, 46, 0.14);
+  border-color: rgba(225, 29, 46, 0.45);
+  box-shadow: 0 12px 30px rgba(225, 29, 46, 0.28), 0 0 40px rgba(225, 29, 46, 0.18);
 }
 
 .streak-badge:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-  border-color: rgba(132, 130, 143, 0.5);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .streak-badge.active:hover {
-  box-shadow: 0 6px 24px rgba(255, 123, 0, 0.5), 0 0 40px rgba(255, 123, 0, 0.3);
+  box-shadow: 0 14px 36px rgba(225, 29, 46, 0.34), 0 0 48px rgba(225, 29, 46, 0.22);
 }
 
 .streak-icon {
@@ -282,7 +307,7 @@
 
 .streak-badge.active .streak-icon {
   animation: fireFlicker 1.5s infinite;
-  filter: drop-shadow(0 0 8px rgba(255, 123, 0, 0.8));
+  filter: drop-shadow(0 0 10px rgba(225, 29, 46, 0.85));
 }
 
 @keyframes flicker {
@@ -291,7 +316,7 @@
     transform: scale(1);
   }
   50% {
-    opacity: 0.8;
+    opacity: 0.85;
     transform: scale(1.05);
   }
 }
@@ -302,7 +327,7 @@
     transform: scale(1) rotate(-5deg);
   }
   25% {
-    opacity: 0.9;
+    opacity: 0.92;
     transform: scale(1.08) rotate(5deg);
   }
   50% {
@@ -310,7 +335,7 @@
     transform: scale(1.15) rotate(-3deg);
   }
   75% {
-    opacity: 0.95;
+    opacity: 0.96;
     transform: scale(1.05) rotate(3deg);
   }
 }
@@ -318,16 +343,17 @@
 .streak-count {
   font-size: 15px;
   font-weight: 700;
-  color: #FFFFF3;
+  color: var(--text-main);
   white-space: nowrap;
 }
 
 .streak-badge.active .streak-count {
-  color: #FFE5B4;
-  text-shadow: 0 0 10px rgba(255, 123, 0, 0.5);
+  color: var(--text-main);
+  text-shadow: 0 0 12px rgba(225, 29, 46, 0.35);
 }
 
-/* Responsive Design */
+/* ================= RESPONSIVE ================= */
+
 @media (max-width: 968px) {
   .header {
     padding: 12px 20px;
@@ -438,8 +464,8 @@
 
 /* Loading and Error States */
 .header-center p[style*="salmon"] {
-  color: #ff6b6b !important;
-  background: rgba(255, 107, 107, 0.1);
+  color: var(--accent) !important;
+  background: rgba(225, 29, 46, 0.12);
   padding: 4px 12px;
   border-radius: 6px;
   font-weight: 600 !important;

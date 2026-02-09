@@ -16,97 +16,111 @@ const Header = ({ setPage, onLogout }) => {
     levelProgressPct: 0,
   });
 
-  // ✅ Go to Profile (your app navigation is state-based)
   const goToProfile = () => {
     setIsProfileOpen(false);
     setPage?.("profile");
   };
 
-  // ✅ Logout handled by App.jsx
   const handleLogout = async () => {
     setIsProfileOpen(false);
     await onLogout?.();
   };
 
   useEffect(() => {
-  let isMounted = true;
+    let isMounted = true;
 
-  const loadHeaderStats = async () => {
-    setLoading(true);
-    setPageError("");
+    const loadHeaderStats = async () => {
+      setLoading(true);
+      setPageError("");
 
-    try {
-      const { data: authRes, error: authErr } = await supabase.auth.getUser();
-      if (authErr) throw authErr;
-      if (!authRes?.user) throw new Error("No logged-in user.");
+      try {
+        const { data: authRes, error: authErr } = await supabase.auth.getUser();
+        if (authErr) throw authErr;
+        if (!authRes?.user) throw new Error("No logged-in user.");
 
-      const authUser = authRes.user;
+        const authUser = authRes.user;
 
-      const { data: userRow, error: uErr } = await supabase
-        .from("Users")
-        .select("id, auth_id, display_name, avatar_url")
-        .eq("auth_id", authUser.id)
-        .maybeSingle();
+        // ✅ Correct column: avatar_url
+        const { data: userRow, error: uErr } = await supabase
+          .from("Users")
+          .select("id, auth_id, display_name, avatar_url")
+          .eq("auth_id", authUser.id)
+          .maybeSingle();
 
-      if (uErr) throw uErr;
-      if (!userRow) throw new Error("No Users row found.");
+        if (uErr) throw uErr;
+        if (!userRow) throw new Error("No Users row found.");
 
-      const appUserId = userRow.id;
+        const appUserId = userRow.id;
 
-      const displayName = userRow.display_name || authUser.email || "User";
-      const avatarUrl = userRow.avatar_url || null;
+        const displayName = userRow.display_name || authUser.email || "User";
 
-      const { count: workoutsCount, error: wcErr } = await supabase
-        .from("Workouts")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", appUserId);
+        // ✅ Resolve avatar from DB (avatar_url)
+        // Works for:
+        // - full URL: https://...
+        // - storage path: avatars/xxx.png  (bucket assumed "avatars")
+        let avatarUrl = null;
+        const rawAvatar = userRow.avatar_url;
 
-      if (wcErr) throw wcErr;
+        if (rawAvatar) {
+          if (/^https?:\/\//i.test(rawAvatar)) {
+            avatarUrl = rawAvatar;
+          } else {
+            // If you use Supabase Storage and store only the path
+            const { data } = supabase.storage.from("avatars").getPublicUrl(rawAvatar);
+            avatarUrl = data?.publicUrl || null;
+          }
+        }
 
-      const workouts = workoutsCount ?? 0;
-      const workoutsPerLevel = 5;
-      const level = Math.max(1, 1 + Math.floor(workouts / workoutsPerLevel));
-      const withinLevel = workouts % workoutsPerLevel;
-      const levelProgressPct = Math.round((withinLevel / workoutsPerLevel) * 100);
+        const { count: workoutsCount, error: wcErr } = await supabase
+          .from("Workouts")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", appUserId);
 
-      const { data: logs, error: lErr } = await supabase
-        .from("ExerciseLog")
-        .select("date")
-        .eq("user_id", appUserId);
+        if (wcErr) throw wcErr;
 
-      if (lErr) throw lErr;
+        const workouts = workoutsCount ?? 0;
+        const workoutsPerLevel = 5;
 
-      const streak = calcStreakDaysFromLogs(logs ?? []);
+        const level = Math.max(1, 1 + Math.floor(workouts / workoutsPerLevel));
+        const withinLevel = workouts % workoutsPerLevel;
+        const levelProgressPct = Math.round((withinLevel / workoutsPerLevel) * 100);
 
-      if (!isMounted) return;
+        const { data: logs, error: lErr } = await supabase
+          .from("ExerciseLog")
+          .select("date")
+          .eq("user_id", appUserId);
 
-      setUserStats({
-        displayName,
-        avatarUrl,
-        streak,
-        level,
-        levelProgressPct,
-      });
-    } catch (e) {
-      if (!isMounted) return;
-      setPageError(e?.message || "Failed to load header stats.");
-    } finally {
-      if (isMounted) setLoading(false);
-    }
-  };
+        if (lErr) throw lErr;
 
-  // initial load
-  loadHeaderStats();
+        const streak = calcStreakDaysFromLogs(logs ?? []);
 
-  // refresh after saving workout
-  const onSaved = () => loadHeaderStats();
-  window.addEventListener("workout_saved", onSaved);
+        if (!isMounted) return;
 
-  return () => {
-    isMounted = false;
-    window.removeEventListener("workout_saved", onSaved);
-  };
-}, []);
+        setUserStats({
+          displayName,
+          avatarUrl,
+          streak,
+          level,
+          levelProgressPct,
+        });
+      } catch (e) {
+        if (!isMounted) return;
+        setPageError(e?.message || "Failed to load header stats.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadHeaderStats();
+
+    const onSaved = () => loadHeaderStats();
+    window.addEventListener("workout_saved", onSaved);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("workout_saved", onSaved);
+    };
+  }, []);
 
   // close dropdown when clicking outside
   useEffect(() => {
@@ -130,7 +144,7 @@ const Header = ({ setPage, onLogout }) => {
   return (
     <header className="header">
       <div className="header-container header-compact">
-        {/* LEFT: Profile + dropdown + Level */}
+        {/* LEFT */}
         <div className="header-left header-left-profile profile-area" style={{ position: "relative" }}>
           <button
             onClick={() => setIsProfileOpen((v) => !v)}
@@ -152,6 +166,7 @@ const Header = ({ setPage, onLogout }) => {
             ) : (
               <div className="profile-avatar fallback">{initials}</div>
             )}
+
             <span className="profile-name">{userStats.displayName}</span>
             <span style={{ fontSize: 12, opacity: 0.8 }}>▾</span>
           </button>
@@ -172,12 +187,8 @@ const Header = ({ setPage, onLogout }) => {
                 zIndex: 50,
               }}
             >
-              <button onClick={goToProfile} style={dropdownBtnStyle}>
-                👤 Profile
-              </button>
-
+              <button onClick={goToProfile} style={dropdownBtnStyle}>👤 Profile</button>
               <div style={{ height: 1, background: "rgba(0,0,0,0.06)" }} />
-
               <button onClick={handleLogout} style={{ ...dropdownBtnStyle, color: "#B00020" }}>
                 🚪 Logout
               </button>
@@ -192,7 +203,7 @@ const Header = ({ setPage, onLogout }) => {
           </div>
         </div>
 
-        {/* CENTER: Logo text */}
+        {/* CENTER */}
         <div className="header-center">
           <div className="header-logo-text">
             Trainify<span className="header-logo-dot"></span>
@@ -202,7 +213,7 @@ const Header = ({ setPage, onLogout }) => {
           {pageError && <p style={{ fontSize: 12, marginTop: 6, color: "salmon" }}>{pageError}</p>}
         </div>
 
-        {/* RIGHT: Streak only */}
+        {/* RIGHT */}
         <div className="header-right header-right-streak">
           <div className={`streak-badge ${userStats.streak > 0 ? "active" : ""}`}>
             <span className="streak-icon">🔥</span>
@@ -228,9 +239,8 @@ function calcStreakDaysFromLogs(logs) {
   const days = new Set((logs || []).map((l) => l?.date).filter(Boolean));
   let streak = 0;
 
-  // start from today (LOCAL), go backwards while there's a workout day
   const d = new Date();
-  d.setHours(12, 0, 0, 0); // midday avoids DST edge cases
+  d.setHours(12, 0, 0, 0);
 
   while (true) {
     const y = d.getFullYear();
@@ -248,6 +258,5 @@ function calcStreakDaysFromLogs(logs) {
 
   return streak;
 }
-
 
 export default Header;

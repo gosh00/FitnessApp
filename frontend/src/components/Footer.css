@@ -1,9 +1,26 @@
+/* Footer Styles - Fitness App (UPDATED COLORS to match Trainify header/nav) */
+
+:root {
+  --bg-main: #0f0f10;
+  --bg-card: #18181b;
+  --bg-card-2: #151518;
+
+  --text-main: #f5f5f5;
+  --text-muted: #9ca3af;
+
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --border-mid: rgba(255, 255, 255, 0.12);
+
+  --accent: #e11d2e;
+  --accent-glow: rgba(225, 29, 46, 0.35);
+}
+
 /* Footer Styles - Fitness App */
 .footer {
-  background-color: #0D0221;
-  color: #FFFFF3;
+  background: linear-gradient(180deg, #141417 0%, #0f0f10 100%);
+  color: var(--text-main);
   padding: 2rem 0 1rem;
-  border-top: 2px solid rgba(132, 130, 143, 0.2);
+  border-top: 1px solid var(--border-soft);
   margin-top: auto;
 }
 
@@ -18,7 +35,7 @@
   grid-template-columns: 2fr 1fr 1fr;
   gap: 3rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid rgba(132, 130, 143, 0.1);
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .footer-brand {
@@ -36,14 +53,15 @@
 
 .footer-logo .logo-icon {
   font-size: 2rem;
-  background: linear-gradient(135deg, #84828F, #FFFFF3);
+  background: linear-gradient(135deg, rgba(225, 29, 46, 0.9), rgba(185, 28, 28, 0.9));
   width: 50px;
   height: 50px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #0D0221;
+  color: #0b0b0c;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
 }
 
 .footer-logo .logo-text {
@@ -55,16 +73,17 @@
   font-weight: 700;
   font-size: 1.5rem;
   letter-spacing: 0.5px;
+  color: var(--text-main);
 }
 
 .footer-logo .logo-subtitle {
   font-size: 0.8rem;
-  color: #84828F;
+  color: var(--text-muted);
   letter-spacing: 0.3px;
 }
 
 .footer-description {
-  color: #84828F;
+  color: var(--text-muted);
   line-height: 1.6;
   font-size: 0.9rem;
   max-width: 400px;
@@ -75,7 +94,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 1.2rem;
-  color: #FFFFF3;
+  color: var(--text-main);
 }
 
 .links-grid {
@@ -88,7 +107,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #84828F;
+  color: var(--text-muted);
   text-decoration: none;
   padding: 0.6rem;
   border-radius: 8px;
@@ -96,8 +115,8 @@
 }
 
 .quick-link:hover {
-  background-color: rgba(132, 130, 143, 0.1);
-  color: #FFFFF3;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
   transform: translateX(5px);
 }
 
@@ -119,22 +138,23 @@
 .social-link {
   width: 45px;
   height: 45px;
-  background-color: rgba(255, 255, 243, 0.05);
+  background-color: rgba(255, 255, 255, 0.06);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FFFFF3;
+  color: var(--text-main);
   font-size: 1.2rem;
   text-decoration: none;
   transition: all 0.3s ease;
-  border: 2px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.10);
 }
 
 .social-link:hover {
-  background-color: var(--social-color);
+  background-color: rgba(225, 29, 46, 0.18);
+  border-color: rgba(225, 29, 46, 0.45);
   transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 26px rgba(225, 29, 46, 0.18);
 }
 
 .app-badges {
@@ -149,7 +169,7 @@
   gap: 0.5rem;
   padding: 0.6rem 1rem;
   border-radius: 8px;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.10);
   cursor: pointer;
   font-weight: 500;
   font-size: 0.85rem;
@@ -157,19 +177,20 @@
 }
 
 .app-store-btn {
-  background-color: #000;
-  color: #FFFFF3;
+  background-color: rgba(0, 0, 0, 0.35);
+  color: var(--text-main);
 }
 
 .play-store-btn {
-  background-color: #FFFFF3;
-  color: #0D0221;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
 }
 
 .app-store-btn:hover,
 .play-store-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+  border-color: rgba(225, 29, 46, 0.35);
 }
 
 .footer-bottom {
@@ -179,10 +200,11 @@
 .workout-stats {
   display: flex;
   justify-content: space-around;
-  background-color: rgba(255, 255, 243, 0.03);
+  background-color: rgba(255, 255, 255, 0.04);
   padding: 1.5rem;
   border-radius: 12px;
   margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .stat {
@@ -194,13 +216,13 @@
 .stat-number {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #FFFFF3;
+  color: var(--text-main);
   margin-bottom: 0.3rem;
 }
 
 .stat-label {
   font-size: 0.8rem;
-  color: #84828F;
+  color: var(--text-muted);
 }
 
 .footer-info {
@@ -208,11 +230,11 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 1rem;
-  border-top: 1px solid rgba(132, 130, 143, 0.1);
+  border-top: 1px solid var(--border-soft);
 }
 
 .copyright {
-  color: #84828F;
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
 
@@ -222,14 +244,14 @@
 }
 
 .legal-link {
-  color: #84828F;
+  color: var(--text-muted);
   text-decoration: none;
   font-size: 0.85rem;
   transition: color 0.3s ease;
 }
 
 .legal-link:hover {
-  color: #FFFFF3;
+  color: var(--text-main);
 }
 
 /* Responsive Design */
@@ -238,7 +260,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
   }
-  
+
   .footer-brand {
     grid-column: 1 / -1;
   }
@@ -248,24 +270,24 @@
   .footer-container {
     padding: 0 1rem;
   }
-  
+
   .footer-main {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
-  
+
   .workout-stats {
     flex-direction: column;
     gap: 1.5rem;
     text-align: center;
   }
-  
+
   .footer-info {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
   }
-  
+
   .footer-legal {
     flex-wrap: wrap;
     justify-content: center;
@@ -276,11 +298,11 @@
   .links-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .app-badges {
     flex-direction: column;
   }
-  
+
   .social-icons {
     justify-content: center;
   }
