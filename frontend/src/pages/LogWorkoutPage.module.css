@@ -1,135 +1,139 @@
-:root {
-  --bg-main: #0f1014;
-  --bg-card: #1d1f27;
-  --bg-card-2: #171820;
+/* LogWorkoutPage.module.css */
 
-  --text-main: #ffffff;
-  --text-muted: #c7c9d1;
-
-  --border: rgba(255, 255, 255, 0.18);
-  --border-soft: rgba(255, 255, 255, 0.12);
-
-  --accent: #e11d2e;
-  --accent-soft: #ff4b5c;
+/* layout fix */
+.wrapper {
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 24px;
 }
 
-/* ======================== */
-
+/* titles / text (FORCE DARK) */
 .title {
-  margin-bottom: 1.5rem;
-  color: var(--text-main);
+  margin: 0 0 18px 0;
+  color: #111827;
+  font-weight: 800;
+  font-size: 22px;
 }
 
 .workoutHeader {
-  margin-bottom: 2rem;
+  margin-bottom: 22px;
 }
 
+/* checkbox row FIX (text visible) */
 .checkboxLabel {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--text-main);
+  gap: 10px;
+  margin-top: 12px;
+
+  color: #111827;      /* ✅ force black */
+  font-size: 14px;     /* ✅ avoid 0-size inheritance */
+  font-weight: 650;
+  line-height: 1.2;
+  user-select: none;
 }
 
+.checkboxLabel input {
+  width: 18px;
+  height: 18px;
+  accent-color: #e11d2e; /* ✅ red */
+}
+
+/* exercise card */
 .exerciseBlock {
-  border: 1px solid var(--border-soft);
+  border: 1px solid rgba(17, 24, 39, 0.12);
   border-radius: 14px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.05)),
-    linear-gradient(180deg, var(--bg-card), var(--bg-card-2));
-
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+  padding: 18px;
+  margin-bottom: 16px;
+  background: #ffffff;
 }
 
+/* header row */
 .exerciseHeader {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 12px;
+  margin-bottom: 14px;
   align-items: center;
   flex-wrap: wrap;
 }
 
-.exerciseSelect {
-  flex: 1;
-  min-width: 200px;
-}
-
+/* sets */
 .setRow {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 10px;
+  margin-bottom: 10px;
   align-items: center;
   flex-wrap: wrap;
 }
 
 .setLabel {
-  min-width: 60px;
-  font-weight: 700;
-  color: var(--text-muted);
+  min-width: 62px;
+  font-weight: 800;
+  color: #374151; /* ✅ dark gray */
 }
 
+/* sizes */
 .smallInput {
-  width: 80px;
+  width: 110px;
 }
 
 .smallSelect {
-  width: 90px;
-  min-width: 90px;
+  width: 100px;
+  min-width: 100px;
   box-sizing: border-box;
-  padding-right: 28px;
+  padding-right: 32px;
 }
 
-/* Buttons */
+/* buttons */
 .addButton {
-  background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
-  color: var(--text-main);
-  border: 1px solid var(--border-soft);
-  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  padding: 10px 14px;
   border-radius: 12px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 14px;
   font-weight: 800;
-  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-  margin-top: 0.5rem;
+  transition: transform 0.15s ease, background 0.15s ease;
+  margin-top: 8px;
 }
 
 .addButton:hover {
+  background: #e5e7eb;
   transform: translateY(-1px);
-  background: rgba(255,255,255,0.18);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
 }
 
-/* Remove button = accent */
 .removeButton {
-  background: linear-gradient(135deg, var(--accent), var(--accent-soft));
-  color: var(--text-main);
-  border: 1px solid rgba(255,255,255,0.14);
-  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, #e11d2e, #ff3b4a);
+  color: #ffffff;
+  border: none;
+  padding: 9px 12px;
   border-radius: 12px;
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 800;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  font-size: 13px;
+  font-weight: 900;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .removeButton:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 40px rgba(225, 29, 46, 0.35);
-  filter: brightness(1.05);
+  box-shadow: 0 10px 24px rgba(225, 29, 46, 0.25);
 }
 
 .actionButtons {
   display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  gap: 12px;
+  margin-top: 18px;
+  flex-wrap: wrap;
 }
 
+/* mobile */
 @media (max-width: 768px) {
+  .wrapper {
+    margin: 16px auto;
+    padding: 16px;
+  }
+
   .setRow {
     flex-direction: column;
     align-items: stretch;

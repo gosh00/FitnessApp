@@ -3,7 +3,7 @@
 .page {
   height: 100vh;
   width: 100vw;
-  background: linear-gradient(135deg, #0D0221 0%, #1a0a3e 100%);
+  background: linear-gradient(135deg, #0f1014 0%, #151518 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -20,20 +20,21 @@
   grid-template-columns: 1fr 1fr;
   width: 1200px;
   height: 700px;
-  background: #FFFFF3;
+  background: #18181b;
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
 }
 
 /* Left Side - Branding & Features */
 .left {
-  background: linear-gradient(135deg, #0D0221 0%, #2a1550 100%);
-  color: #FFFFF3;
+  background: linear-gradient(135deg, #1b1b1f 0%, #151518 100%);
+  color: #f5f5f5;
   padding: 60px 50px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  border-right: 2px solid rgba(255, 255, 255, 0.18);
 }
 
 .brand {
@@ -44,7 +45,7 @@
   font-size: 42px;
   font-weight: 800;
   margin: 0 0 16px 0;
-  background: linear-gradient(135deg, #FFFFF3 0%, #84828F 100%);
+  background: linear-gradient(135deg, #f5f5f5 0%, #9ca3af 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -52,7 +53,7 @@
 
 .tagline {
   font-size: 18px;
-  color: #84828F;
+  color: #9ca3af;
   line-height: 1.6;
   margin: 0;
 }
@@ -71,7 +72,7 @@
 
 .featureIcon {
   font-size: 32px;
-  background: rgba(255, 255, 243, 0.1);
+  background: rgba(255, 255, 255, 0.06);
   width: 56px;
   height: 56px;
   border-radius: 16px;
@@ -79,27 +80,27 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid rgba(132, 130, 143, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .featureText h4 {
   margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #FFFFF3;
+  color: #f5f5f5;
 }
 
 .featureText p {
   margin: 0;
   font-size: 14px;
-  color: #84828F;
+  color: #9ca3af;
   line-height: 1.6;
 }
 
 /* Right Side - Forms */
 .right {
   padding: 60px 50px;
-  background: #FFFFF3;
+  background: #18181b;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -110,7 +111,7 @@
   display: flex;
   gap: 8px;
   margin-bottom: 40px;
-  background: rgba(13, 2, 33, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   padding: 6px;
   border-radius: 12px;
 }
@@ -120,7 +121,7 @@
   padding: 12px 24px;
   border: none;
   background: transparent;
-  color: #84828F;
+  color: #9ca3af;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -129,18 +130,18 @@
 }
 
 .tab:hover {
-  background: rgba(13, 2, 33, 0.05);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .tabActive {
-  background: #0D0221 !important;
-  color: #FFFFF3 !important;
-  box-shadow: 0 2px 8px rgba(13, 2, 33, 0.2);
+  background: #e11d2e !important;
+  color: #f5f5f5 !important;
+  box-shadow: 0 2px 10px rgba(225, 29, 46, 0.35);
 }
 
 /* Success Message */
 .success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
   color: white;
   padding: 16px 20px;
   border-radius: 12px;
@@ -191,13 +192,13 @@
 .formTitle {
   font-size: 32px;
   font-weight: 700;
-  color: #0D0221;
+  color: #f5f5f5;
   margin: 0 0 8px 0;
 }
 
 .formSubtitle {
   font-size: 15px;
-  color: #84828F;
+  color: #9ca3af;
   margin: 0 0 32px 0;
 }
 
@@ -215,7 +216,7 @@
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #0D0221;
+  color: #f5f5f5;
   margin-bottom: 8px;
 }
 
@@ -223,11 +224,11 @@
 .select {
   width: 100%;
   padding: 14px 16px;
-  border: 2px solid rgba(13, 2, 33, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.10);
   border-radius: 10px;
   font-size: 15px;
-  color: #0D0221;
-  background: #FFFFF3;
+  color: #f5f5f5;
+  background: rgba(255, 255, 255, 0.04);
   transition: all 0.3s ease;
   font-family: inherit;
   box-sizing: border-box;
@@ -236,12 +237,12 @@
 .input:focus,
 .select:focus {
   outline: none;
-  border-color: #0D0221;
-  box-shadow: 0 0 0 4px rgba(13, 2, 33, 0.08);
+  border-color: rgba(225, 29, 46, 0.65);
+  box-shadow: 0 0 0 4px rgba(225, 29, 46, 0.18);
 }
 
 .input::placeholder {
-  color: #84828F;
+  color: rgba(156, 163, 175, 0.85);
 }
 
 .inputError {
@@ -251,7 +252,7 @@
 .select {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%230D0221' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 16px center;
   padding-right: 40px;
@@ -271,8 +272,9 @@
   cursor: pointer;
   font-size: 18px;
   padding: 4px;
-  opacity: 0.6;
+  opacity: 0.75;
   transition: opacity 0.2s ease;
+  color: #f5f5f5;
 }
 
 .togglePassword:hover {
@@ -290,21 +292,21 @@
 .submitBtn {
   width: 100%;
   padding: 16px;
-  background: linear-gradient(135deg, #0D0221 0%, #2a1550 100%);
-  color: #FFFFF3;
+  background: linear-gradient(135deg, #e11d2e 0%, #ff3b4a 100%);
+  color: #f5f5f5;
   border: none;
   border-radius: 10px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 8px;
-  box-shadow: 0 4px 12px rgba(13, 2, 33, 0.3);
+  box-shadow: 0 6px 18px rgba(225, 29, 46, 0.28);
 }
 
 .submitBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(13, 2, 33, 0.4);
+  box-shadow: 0 10px 26px rgba(225, 29, 46, 0.35);
 }
 
 .submitBtn:active {
@@ -315,19 +317,19 @@
   text-align: center;
   margin-top: 24px;
   font-size: 14px;
-  color: #84828F;
+  color: #9ca3af;
 }
 
 .switchLink {
-  color: #0D0221;
-  font-weight: 600;
+  color: #f5f5f5;
+  font-weight: 700;
   cursor: pointer;
   margin-left: 6px;
   transition: opacity 0.2s ease;
 }
 
 .switchLink:hover {
-  opacity: 0.7;
+  opacity: 0.8;
   text-decoration: underline;
 }
 

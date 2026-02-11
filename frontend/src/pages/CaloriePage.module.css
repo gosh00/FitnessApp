@@ -1,4 +1,4 @@
-:root {
+.wrapper {
   --bg-main: #0f1014;
   --bg-card: #1d1f27;
   --bg-card-2: #171820;
@@ -15,12 +15,13 @@
   --success: #22c55e;
   --danger: #ef4444;
 }
-
 /* ======================== */
 
 .title {
   margin-bottom: 1.5rem;
-  color: var(--text-main);
+  color: #000;
+  font-weight: 900;
+  font-size: 22px;
 }
 
 .calculatorSection {
@@ -29,17 +30,14 @@
   padding: 1.5rem;
   margin-bottom: 2rem;
 
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.05)),
-    linear-gradient(180deg, var(--bg-card), var(--bg-card-2));
-
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
 }
 
 .sectionTitle {
   margin-bottom: 1rem;
-  color: var(--text-main);
-  font-size: 1.3rem;
+  color: #000;
+  font-size: 1.2rem;
   font-weight: 900;
 }
 
@@ -63,28 +61,29 @@
   flex: 1;
 }
 
+/* results box */
 .results {
   margin-top: 1.5rem;
   padding: 1rem;
 
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04)),
-    linear-gradient(180deg, var(--bg-card), var(--bg-card-2));
-
+  background: #ffffff;
   border: 1px solid var(--border-soft);
   border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
 .resultItem {
   margin-bottom: 0.5rem;
-  font-size: 1.05rem;
-  color: rgba(255, 255, 255, 0.88);
+  font-size: 1.02rem;
+  color: rgba(17, 24, 39, 0.88);
 }
 
 .resultLabel {
-  font-weight: 800;
+  font-weight: 900;
   color: var(--text-main);
 }
+
+/* ================= Goals ================= */
 
 .goalsSection {
   margin-top: 2rem;
@@ -94,26 +93,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   padding: 1rem;
   border: 1px solid var(--border-soft);
   margin-bottom: 0.75rem;
   border-radius: 14px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.05)),
-    linear-gradient(180deg, var(--bg-card), var(--bg-card-2));
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.07);
 
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.30);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .goalCard:hover {
-  transform: translateX(4px);
+  transform: translateY(-1px);
   border-color: var(--border);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.40);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.10);
 }
 
-/* toned, still readable on dark */
+/* left accent strips */
 .goalCardLoss {
   border-left: 4px solid var(--accent);
 }
@@ -123,7 +121,7 @@
 }
 
 .goalCardNeutral {
-  border-left: 4px solid rgba(255, 255, 255, 0.18);
+  border-left: 4px solid rgba(17, 24, 39, 0.18);
 }
 
 .goalInfo {
@@ -156,6 +154,8 @@
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+/* ================= Responsive ================= */
 
 @media (max-width: 768px) {
   .formRow {

@@ -347,7 +347,7 @@ export default function LogWorkoutPage() {
           </div>
         </div>
       ))}
-
+      
       <div className={styles.actionButtons}>
         <button type="button" onClick={addExerciseBlock} className={sharedStyles.secondaryButton}>
           + Add exercise
