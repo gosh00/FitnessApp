@@ -41,3 +41,15 @@ Thumbs.db
 
 # === Optional: uploads (ако пазиш файлове локално) ===
 uploads/
+
+# === Supabase / local tooling ===
+.supabase/
+supabase/.temp/
+
+# === Backend env files (explicit per folder safety) ===
+backend/.env
+backend/.env.*
+
+# === Frontend env files (Vite / React) ===
+frontend/.env
+frontend/.env.*
