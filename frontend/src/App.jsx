@@ -13,7 +13,8 @@ import ExercisesPage from "./pages/ExercisesPage";
 import LogWorkoutPage from "./pages/LogWorkoutPage";
 import WorkoutsFeedPage from "./pages/WorkoutsFeedPage";
 import CaloriePage from "./pages/CaloriePage";
-import FoodCaloriePage from "./pages/FoodCaloriePage";
+import FoodDiaryPage from "./pages/FoodDiaryPage";  
+
 
 import styles from "./App.module.css";
 
@@ -115,7 +116,8 @@ function App() {
 
         {page === "calories" && <CaloriePage currentUser={currentUser} />}
 
-        {page === "food" && <FoodCaloriePage currentUser={currentUser} />}
+        {page === "food-diary" && <FoodDiaryPage currentUser={currentUser} />}
+
       </main>
 
       <Footer />

@@ -1,14 +1,14 @@
-import React from 'react';
-import './Navigation.css';
+import React from "react";
+import "./Navigation.css";
 
 const Navigation = ({ page, setPage }) => {
   const pages = [
-    { id: 'home', label: 'Home' },
-    { id: 'exercises', label: 'Exercises' },
-    { id: 'log', label: 'Log Workout' },
-    { id: 'workouts', label: 'Feed' },
-    { id: 'calories', label: 'Calories' },
-    { id: 'food', label: 'Food Info' },
+    { id: "home", label: "Home" },
+    { id: "exercises", label: "Exercises" },
+    { id: "log", label: "Log Workout" },
+    { id: "workouts", label: "Feed" },
+    { id: "calories", label: "Calories" },
+    { id: "food-diary", label: "Food Diary" },
   ];
 
   return (
@@ -18,7 +18,7 @@ const Navigation = ({ page, setPage }) => {
           {pages.map((item) => (
             <button
               key={item.id}
-              className={`nav-link ${page === item.id ? 'active' : ''}`}
+              className={`nav-link ${page === item.id ? "active" : ""}`}
               onClick={() => setPage(item.id)}
               aria-label={item.label}
             >
