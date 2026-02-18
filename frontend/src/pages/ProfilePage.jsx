@@ -6,9 +6,9 @@ import api from "../api";
 
 const GOAL_OPTIONS = ["Maintain Weight", "Weight loss", "Gain Weight"];
 
-function fallbackAvatar(authId) {
-  return `https://api.dicebear.com/9.x/identicon/svg?seed=${authId || "user"}`;
-}
+// ✅ One single default avatar everywhere (same as Header fallback)
+// Put this file in: /public/default-avatar.png
+const DEFAULT_AVATAR = "/default-avatar.png";
 
 export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
   const [loading, setLoading] = useState(true);
@@ -28,6 +28,16 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
   const [height, setHeight] = useState("");
   const [goal, setGoal] = useState("Maintain Weight");
 
+  const bust = (url) => {
+    if (!url) return "";
+    return `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+  };
+
+  // ✅ Avatar resolver:
+  // - if DB has avatar_url -> use it
+  // - else -> use DEFAULT_AVATAR (same everywhere)
+  const resolveAvatar = (rowAvatarUrl) => bust(rowAvatarUrl || DEFAULT_AVATAR);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -36,7 +46,6 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       setPageError("");
 
       try {
-        // 1) Get auth user (prefer Supabase getUser for correctness)
         const { data: authRes, error: authErr } = await supabase.auth.getUser();
         if (authErr) throw authErr;
 
@@ -52,12 +61,8 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         if (!isMounted) return;
         setAuthId(_authId);
 
-        // 2) Backend ensures profile row exists (service role)
-        const res = await api.post("/profile/ensure", {
-          auth_id: _authId,
-          email,
-        });
-
+        // ✅ Ensure Users row exists via backend (service role)
+        const res = await api.post("/profile/ensure", { auth_id: _authId, email });
         const row = res.data;
         if (!row?.id) throw new Error("Profile ensure did not return a user row.");
 
@@ -72,8 +77,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         setHeight(row.height ?? "");
         setGoal(GOAL_OPTIONS.includes(row.goal) ? row.goal : "Maintain Weight");
 
-        const base = row.avatar_url || fallbackAvatar(_authId);
-        setAvatarUrl(`${base}${base.includes("?") ? "&" : "?"}t=${Date.now()}`);
+        setAvatarUrl(resolveAvatar(row.avatar_url));
       } catch (err) {
         const msg = err?.response?.data?.error || err?.message || "Failed to load profile.";
         if (isMounted) setPageError(msg);
@@ -83,7 +87,6 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     };
 
     loadProfile();
-
     return () => {
       isMounted = false;
     };
@@ -104,8 +107,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     setHeight(userRow.height ?? "");
     setGoal(GOAL_OPTIONS.includes(userRow.goal) ? userRow.goal : "Maintain Weight");
 
-    const base = userRow.avatar_url || fallbackAvatar(authId);
-    setAvatarUrl(`${base}${base.includes("?") ? "&" : "?"}t=${Date.now()}`);
+    setAvatarUrl(resolveAvatar(userRow.avatar_url));
 
     setEditing(false);
     setPageError("");
@@ -160,12 +162,13 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       setHeight(updated.height ?? "");
       setGoal(GOAL_OPTIONS.includes(updated.goal) ? updated.goal : "Maintain Weight");
 
-      const base = updated.avatar_url || fallbackAvatar(authId);
-      setAvatarUrl(`${base}${base.includes("?") ? "&" : "?"}t=${Date.now()}`);
+      setAvatarUrl(resolveAvatar(updated.avatar_url));
 
       setEditing(false);
 
-      // optional: notify App (not required, but kept)
+      // ✅ refresh header instantly
+      window.dispatchEvent(new Event("profile_saved"));
+
       onUpdateProfile?.(currentUser);
 
       alert("Profile updated!");
@@ -219,10 +222,14 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       const newUrl = res.data?.avatar_url;
       if (!newUrl) throw new Error("Backend did not return avatar_url.");
 
-      const busted = `${newUrl}${newUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+      // ✅ show immediately
+      setAvatarUrl(bust(newUrl));
 
-      setAvatarUrl(busted);
-      setUserRow((prev) => (prev ? { ...prev, avatar_url: newUrl } : prev)); // keep DB URL clean
+      // ✅ keep row in sync
+      setUserRow((prev) => (prev ? { ...prev, avatar_url: newUrl } : prev));
+
+      // ✅ refresh header instantly
+      window.dispatchEvent(new Event("profile_saved"));
     } catch (err) {
       const msg = err?.response?.data?.error || err?.message || "Upload failed";
       setPageError(msg);
@@ -274,7 +281,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       {/* AVATAR */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
         <img
-          src={avatarUrl || fallbackAvatar(authId)}
+          src={avatarUrl || DEFAULT_AVATAR}
           alt="avatar"
           style={{
             width: 88,
@@ -285,7 +292,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
             background: "#f5f5f5",
           }}
           onError={(ev) => {
-            ev.currentTarget.src = fallbackAvatar(authId);
+            ev.currentTarget.src = DEFAULT_AVATAR;
           }}
         />
 

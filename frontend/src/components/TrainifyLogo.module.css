@@ -1,0 +1,33 @@
+/* Logo.css (ALIGNED WITH DESIGN SYSTEM - TIGHTER) */
+
+.logo {
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--text-main, #f5f5f5);
+
+  /* Serif logo look */
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-weight: 800;
+  letter-spacing: -2px;
+
+  /* size can be overridden by parent className */
+  font-size: 36px;
+  line-height: 1;
+
+  user-select: none;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  margin-left: 4px;
+
+  border-radius: 999px;
+  background: var(--accent, #e11d2e);
+
+  /* push it slightly down to match baseline alignment */
+  transform: translateY(5px);
+
+  /* subtle glow */
+  box-shadow: 0 0 10px var(--accent-glow, rgba(225, 29, 46, 0.65));
+}

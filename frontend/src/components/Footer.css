@@ -1,309 +1,194 @@
-/* Footer Styles - Fitness App (UPDATED COLORS to match Trainify header/nav) */
+/* src/components/Footer.css */
+/* Premium dark footer that matches Trainify header */
 
 :root {
-  --bg-main: #0f0f10;
-  --bg-card: #18181b;
-  --bg-card-2: #151518;
+  --tf-bg: #0f0f10;
+  --tf-bg-2: #141417;
+  --tf-card: rgba(255,255,255,0.06);
+  --tf-border: rgba(255,255,255,0.12);
 
-  --text-main: #f5f5f5;
-  --text-muted: #9ca3af;
+  --tf-text: #f5f5f5;
+  --tf-muted: rgba(245,245,245,0.65);
 
-  --border-soft: rgba(255, 255, 255, 0.06);
-  --border-mid: rgba(255, 255, 255, 0.12);
+  --tf-accent: #e11d2e;
+  --tf-accent-soft: rgba(225, 29, 46, 0.16);
 
-  --accent: #e11d2e;
-  --accent-glow: rgba(225, 29, 46, 0.35);
+  --tf-shadow: 0 16px 44px rgba(0,0,0,0.55);
 }
 
-/* Footer Styles - Fitness App */
-.footer {
-  background: linear-gradient(180deg, #141417 0%, #0f0f10 100%);
-  color: var(--text-main);
-  padding: 2rem 0 1rem;
-  border-top: 1px solid var(--border-soft);
-  margin-top: auto;
+.tf-footer {
+  margin-top: 28px;
+  background: linear-gradient(135deg, #1b1b1f 0%, #141417 100%);
+  color: var(--tf-text);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  box-shadow: var(--tf-shadow);
 }
 
-.footer-container {
-  max-width: 1400px;
+.tf-footer-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 26px 18px;
 }
 
-.footer-main {
+.tf-footer-top {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 3rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid var(--border-soft);
+  grid-template-columns: 1.3fr 0.9fr 1fr;
+  gap: 22px;
+  align-items: start;
 }
 
-.footer-brand {
+.tf-footer-brand {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 10px;
 }
 
-.footer-logo {
-  display: flex;
+.tf-footer-logo {
+  display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
 }
 
-.footer-logo .logo-icon {
-  font-size: 2rem;
-  background: linear-gradient(135deg, rgba(225, 29, 46, 0.9), rgba(185, 28, 28, 0.9));
-  width: 50px;
-  height: 50px;
+.tf-logo {
+  display: inline-flex;
+  align-items: baseline;
+  line-height: 1;
+}
+
+.tf-footer-desc {
+  margin: 0;
+  color: var(--tf-muted);
+  font-weight: 600;
+  line-height: 1.5;
+  max-width: 520px;
+}
+
+.tf-footer-title {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--tf-muted);
+  font-weight: 800;
+}
+
+/* Links */
+.tf-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tf-link {
+  text-align: left;
+  padding: 10px 12px;
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0b0b0c;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-}
-
-.footer-logo .logo-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.footer-logo .logo-title {
+  border: 1px solid var(--tf-border);
+  background: var(--tf-card);
+  color: var(--tf-text);
+  cursor: pointer;
   font-weight: 700;
-  font-size: 1.5rem;
-  letter-spacing: 0.5px;
-  color: var(--text-main);
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
-.footer-logo .logo-subtitle {
-  font-size: 0.8rem;
-  color: var(--text-muted);
+.tf-link:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.18);
+}
+
+/* Stats */
+.tf-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.tf-stat {
+  border: 1px solid var(--tf-border);
+  background: var(--tf-card);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.tf-stat-number {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+}
+
+.tf-stat-label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--tf-muted);
+  font-weight: 800;
   letter-spacing: 0.3px;
 }
 
-.footer-description {
-  color: var(--text-muted);
-  line-height: 1.6;
-  font-size: 0.9rem;
-  max-width: 400px;
-}
-
-.footer-links .links-title,
-.footer-social .social-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 1.2rem;
-  color: var(--text-main);
-}
-
-.links-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-
-.quick-link {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-muted);
-  text-decoration: none;
-  padding: 0.6rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.quick-link:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-  color: var(--text-main);
-  transform: translateX(5px);
-}
-
-.link-icon {
-  font-size: 1.2rem;
-}
-
-.link-label {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.social-icons {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.social-link {
-  width: 45px;
-  height: 45px;
-  background-color: rgba(255, 255, 255, 0.06);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-main);
-  font-size: 1.2rem;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-}
-
-.social-link:hover {
-  background-color: rgba(225, 29, 46, 0.18);
-  border-color: rgba(225, 29, 46, 0.45);
-  transform: translateY(-3px);
-  box-shadow: 0 10px 26px rgba(225, 29, 46, 0.18);
-}
-
-.app-badges {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.app-store-btn,
-.play-store-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.85rem;
-  transition: all 0.3s ease;
-}
-
-.app-store-btn {
-  background-color: rgba(0, 0, 0, 0.35);
-  color: var(--text-main);
-}
-
-.play-store-btn {
-  background-color: rgba(255, 255, 255, 0.06);
-  color: var(--text-main);
-}
-
-.app-store-btn:hover,
-.play-store-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
-  border-color: rgba(225, 29, 46, 0.35);
-}
-
-.footer-bottom {
-  padding-top: 1.5rem;
-}
-
-.workout-stats {
-  display: flex;
-  justify-content: space-around;
-  background-color: rgba(255, 255, 255, 0.04);
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.stat-number {
-  font-size: 1.8rem;
+.tf-loading {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--tf-muted);
   font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 0.3rem;
 }
 
-.stat-label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.footer-info {
+/* Bottom */
+.tf-footer-bottom {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-soft);
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
-.copyright {
-  color: var(--text-muted);
-  font-size: 0.85rem;
+.tf-copyright {
+  color: var(--tf-muted);
+  font-weight: 700;
+  font-size: 13px;
 }
 
-.footer-legal {
-  display: flex;
-  gap: 1.5rem;
+.tf-bottom-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--tf-muted);
 }
 
-.legal-link {
-  color: var(--text-muted);
-  text-decoration: none;
-  font-size: 0.85rem;
-  transition: color 0.3s ease;
+.tf-mini-link {
+  background: transparent;
+  border: 0;
+  color: var(--tf-muted);
+  font-weight: 800;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.legal-link:hover {
-  color: var(--text-main);
+.tf-mini-link:hover {
+  background: var(--tf-accent-soft);
+  color: var(--tf-text);
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .footer-main {
+.tf-dot {
+  opacity: 0.7;
+}
+
+/* Responsive */
+@media (max-width: 920px) {
+  .tf-footer-top {
+    grid-template-columns: 1fr;
+  }
+
+  .tf-stats-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-  }
-
-  .footer-brand {
-    grid-column: 1 / -1;
   }
 }
 
-@media (max-width: 768px) {
-  .footer-container {
-    padding: 0 1rem;
-  }
-
-  .footer-main {
+@media (max-width: 520px) {
+  .tf-stats-grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .workout-stats {
-    flex-direction: column;
-    gap: 1.5rem;
-    text-align: center;
-  }
-
-  .footer-info {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-
-  .footer-legal {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .links-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .app-badges {
-    flex-direction: column;
-  }
-
-  .social-icons {
-    justify-content: center;
   }
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 import styles from "./ExercisesPage.module.css";
 import sharedStyles from "../styles/shared.module.css";
@@ -15,16 +15,18 @@ function toYouTubeEmbed(url = "") {
   return id ? `https://www.youtube.com/embed/${id}` : null;
 }
 
+const MAX_VISIBLE = 12;
+
 export default function ExercisesPage() {
   const [exercises, setExercises] = useState([]);
 
-  const [nameFilter, setNameFilter] = useState("");     // ✅ NEW
+  const [nameFilter, setNameFilter] = useState("");
   const [muscleFilter, setMuscleFilter] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [pageError, setPageError] = useState("");
 
-  const [selected, setSelected] = useState(null); // ✅ modal
+  const [selected, setSelected] = useState(null);
 
   const loadExercises = useCallback(async () => {
     setLoading(true);
@@ -36,12 +38,10 @@ export default function ExercisesPage() {
         .select("id, name, muscle_group, description, image_url, video_url")
         .order("name", { ascending: true });
 
-      // ✅ filter by name (case-insensitive, partial match)
       if (nameFilter.trim()) {
         query = query.ilike("name", `%${nameFilter.trim()}%`);
       }
 
-      // ✅ filter by muscle group (case-insensitive, partial match)
       if (muscleFilter.trim()) {
         query = query.ilike("muscle_group", `%${muscleFilter.trim()}%`);
       }
@@ -63,11 +63,15 @@ export default function ExercisesPage() {
     loadExercises();
   }, [loadExercises]);
 
+  const visibleExercises = useMemo(() => {
+    return exercises.slice(0, MAX_VISIBLE);
+  }, [exercises]);
+
   return (
     <div className={sharedStyles.card}>
       <h2 className={styles.title}>Exercises Library</h2>
 
-      {/* ✅ Filters */}
+      {/* Filters */}
       <div className={styles.filterSection}>
         <input
           placeholder="Filter by name (e.g. bench, squat)"
@@ -93,49 +97,49 @@ export default function ExercisesPage() {
         </button>
       </div>
 
-      {/* (Optional) Admin form - show it always, or later limit by email */}
-
       {pageError && <div style={{ color: "red", marginTop: 8 }}>{pageError}</div>}
-
       {loading && <div className={sharedStyles.loading}>Loading exercises...</div>}
 
       {!loading && exercises.length === 0 && (
         <div className={styles.emptyState}>No exercises found.</div>
       )}
 
-      {/* ✅ list */}
+      {!loading && exercises.length > MAX_VISIBLE && (
+        <div className={styles.limitNote}>
+          Showing {MAX_VISIBLE} of {exercises.length}. Use filters to narrow results.
+        </div>
+      )}
+
+      {/* ✅ 2-column list + max 12 */}
       <ul className={styles.exerciseList}>
-        {exercises.map((ex) => (
+        {visibleExercises.map((ex) => (
           <li
             key={ex.id}
             className={styles.exerciseItem}
             onClick={() => setSelected(ex)}
-            style={{ cursor: "pointer" }}
             title="Click for details"
           >
-            <div className={styles.exerciseName}>{ex.name}</div>
-            <div className={styles.exerciseMuscle}>{ex.muscle_group}</div>
+            <div className={styles.exerciseTop}>
+              <div>
+                <div className={styles.exerciseName}>{ex.name}</div>
+                <div className={styles.exerciseMuscle}>{ex.muscle_group}</div>
+              </div>
+
+              <div className={styles.openHint}>Details ▸</div>
+            </div>
 
             {ex.image_url && (
-              <img
-                src={ex.image_url}
-                alt={ex.name}
-                style={{ maxWidth: 220, borderRadius: 10, marginTop: 8 }}
-              />
+              <img src={ex.image_url} alt={ex.name} className={styles.exerciseImg} />
             )}
 
             {ex.description && (
               <div className={styles.exerciseDescription}>{ex.description}</div>
             )}
-
-            <div style={{ opacity: 0.7, marginTop: 8, fontSize: 12 }}>
-              Click to open video & details
-            </div>
           </li>
         ))}
       </ul>
 
-      {/* ✅ MODAL */}
+      {/* MODAL */}
       {selected && (
         <div
           onClick={() => setSelected(null)}

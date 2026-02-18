@@ -197,8 +197,13 @@ const AuthPage = ({ onLogin, setPage }) => {
         {/* LEFT */}
         <div className={styles.left}>
           <div className={styles.brand}>
-            <h1 className={styles.logo}>FitnessPro</h1>
-            <p className={styles.tagline}>Transform your fitness journey with AI-powered tracking</p>
+<h1 className={styles.logo}>
+  Trainify<span className={styles.logoDot}></span>
+</h1>
+<p className={styles.tagline}>
+  Your personal fitness tracker for workouts, nutrition, and progress monitoring
+</p>
+
           </div>
 
           <div className={styles.features}>

@@ -1,21 +1,114 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { supabase } from "../supabaseClient";
 import styles from "./FoodDiaryPage.module.css";
 
 const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
+const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"];
 
 function calcFrom100g(food, grams) {
   const g = Number(grams) || 0;
   const factor = g / 100;
 
   return {
-    kcal: (Number(food?.kcal_100) || 0) * factor,
+    calories: (Number(food?.kcal_100) || 0) * factor,
     protein: (Number(food?.protein_100) || 0) * factor,
     carbs: (Number(food?.carbs_100) || 0) * factor,
     sugars: (Number(food?.sugars_100) || 0) * factor,
     fat: (Number(food?.fat_100) || 0) * factor,
     fiber: (Number(food?.fiber_100) || 0) * factor,
   };
+}
+
+function NutritionMini({ t }) {
+  if (!t) return null;
+  return (
+    <div className={styles.totalsMini}>
+      <div><span>Calories:</span> {round1(t.calories)}</div>
+      <div><span>Protein:</span> {round1(t.protein)}</div>
+      <div><span>Carbohydrates:</span> {round1(t.carbs)}</div>
+      <div><span>Sugars:</span> {round1(t.sugars)}</div>
+      <div><span>Fat:</span> {round1(t.fat)}</div>
+      <div><span>Fiber:</span> {round1(t.fiber)}</div>
+    </div>
+  );
+}
+
+function MealTable({ title, rows, onDelete }) {
+  const totals = useMemo(() => {
+    return (rows || []).reduce(
+      (acc, row) => {
+        const r = calcFrom100g(row?.Foods, row?.grams);
+        acc.calories += r.calories;
+        acc.protein += r.protein;
+        acc.carbs += r.carbs;
+        acc.sugars += r.sugars;
+        acc.fat += r.fat;
+        acc.fiber += r.fiber;
+        return acc;
+      },
+      { calories: 0, protein: 0, carbs: 0, sugars: 0, fat: 0, fiber: 0 }
+    );
+  }, [rows]);
+
+  return (
+    <div className={styles.tableWrap} style={{ marginTop: "1rem" }}>
+      <div className={styles.tableHeader}>
+        <div className={styles.tableTitle}>{title}</div>
+        <NutritionMini t={totals} />
+      </div>
+
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th className={styles.th}>Food</th>
+            <th className={styles.th}>Grams</th>
+            <th className={styles.th}>Calories</th>
+            <th className={styles.th}>Protein</th>
+            <th className={styles.th}>Carbohydrates</th>
+            <th className={styles.th}>Sugars</th>
+            <th className={styles.th}>Fat</th>
+            <th className={styles.th}>Fiber</th>
+            <th className={styles.th}></th>
+          </tr>
+        </thead>
+        <tbody>
+          {(rows || []).map((row) => {
+            const f = row.Foods;
+            const r = calcFrom100g(f, row.grams);
+
+            return (
+              <tr key={row.id} className={styles.tr}>
+                <td className={`${styles.td} ${styles.foodCell}`}>
+                  <div className={styles.foodName}>{f?.name}</div>
+                  {f?.brand ? <div className={styles.foodBrand}>{f.brand}</div> : null}
+                </td>
+                <td className={styles.td}>{row.grams}</td>
+                <td className={styles.td}>{round1(r.calories)}</td>
+                <td className={styles.td}>{round1(r.protein)}</td>
+                <td className={styles.td}>{round1(r.carbs)}</td>
+                <td className={styles.td}>{round1(r.sugars)}</td>
+                <td className={styles.td}>{round1(r.fat)}</td>
+                <td className={styles.td}>{round1(r.fiber)}</td>
+                <td className={styles.td}>
+                  <button className={styles.deleteBtn} onClick={() => onDelete(row.id)}>
+                    ✕
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+
+          {(rows || []).length === 0 ? (
+            <tr className={styles.tr}>
+              <td className={styles.td} colSpan={9} style={{ opacity: 0.7 }}>
+                No entries yet.
+              </td>
+            </tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export default function FoodDiaryPage({ currentUser }) {
@@ -27,79 +120,96 @@ export default function FoodDiaryPage({ currentUser }) {
   const [query, setQuery] = useState("");
   const [selectedFoodId, setSelectedFoodId] = useState("");
   const [grams, setGrams] = useState(100);
+  const [meal, setMeal] = useState("Breakfast");
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
   const gramsRef = useRef(null);
 
-  const loadFoods = useCallback(async () => {
-    setErr("");
+  // ✅ Load foods (no sync setState before await)
+  useEffect(() => {
+    let cancelled = false;
 
-    const { data, error } = await supabase
-      .from("Foods")
-      .select("id,name,brand,kcal_100,protein_100,carbs_100,sugars_100,fat_100,fiber_100")
-      .order("name", { ascending: true });
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("Foods")
+          .select("id,name,brand,kcal_100,protein_100,carbs_100,sugars_100,fat_100,fiber_100")
+          .order("name", { ascending: true });
 
-    if (error) setErr(error.message);
-    else setFoods(data || []);
+        if (cancelled) return;
+
+        if (error) {
+          setErr(error.message);
+          setFoods([]);
+        } else {
+          setErr("");
+          setFoods(data || []);
+        }
+      } catch (e) {
+        if (cancelled) return;
+        setErr(e?.message || "Failed to load foods.");
+        setFoods([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const loadLogs = useCallback(
-    async (forDate) => {
-      setLoading(true);
-      setErr("");
+  // ✅ Load logs for date (no sync setState before await)
+  useEffect(() => {
+    let cancelled = false;
 
+    (async () => {
       const userId = currentUser?.id;
       if (!userId) {
-        setErr("Not logged in.");
-        setLoading(false);
+        // no setState sync here; do it async
+        await Promise.resolve();
+        if (!cancelled) setErr("Not logged in.");
         return;
       }
 
-      const { data, error } = await supabase
-        .from("FoodLogs")
-        .select(
-          `id, grams, meal, date, note, created_at,
-           Foods:food_id (
-             id, name, brand, kcal_100, protein_100, carbs_100, sugars_100, fat_100, fiber_100
-           )`
-        )
-        .eq("user_auth_id", userId)
-        .eq("date", forDate)
-        .order("created_at", { ascending: false });
+      try {
+        setLoading(true);
 
-      if (error) setErr(error.message);
-      else setLogs(data || []);
+        const { data, error } = await supabase
+          .from("FoodLogs")
+          .select(
+            `id, grams, meal, date, note, created_at,
+             Foods:food_id (
+               id, name, brand, kcal_100, protein_100, carbs_100, sugars_100, fat_100, fiber_100
+             )`
+          )
+          .eq("user_auth_id", userId)
+          .eq("date", date)
+          .order("created_at", { ascending: false });
 
-      setLoading(false);
-    },
-    [currentUser?.id]
-  );
+        if (cancelled) return;
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      if (!mounted) return;
-      await loadFoods();
+        if (error) {
+          setErr(error.message);
+          setLogs([]);
+        } else {
+          setErr("");
+          setLogs(data || []);
+        }
+      } catch (e) {
+        if (cancelled) return;
+        setErr(e?.message || "Failed to load logs.");
+        setLogs([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
-    return () => {
-      mounted = false;
-    };
-  }, [loadFoods]);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      if (!mounted) return;
-      await loadLogs(date);
-    })();
     return () => {
-      mounted = false;
+      cancelled = true;
     };
-  }, [date, loadLogs]);
+  }, [currentUser?.id, date]);
 
-  // Filtered foods list
   const filteredFoods = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return foods.slice(0, 50);
@@ -113,7 +223,6 @@ export default function FoodDiaryPage({ currentUser }) {
       .slice(0, 50);
   }, [foods, query]);
 
-  // ✅ Derived "effective" selection WITHOUT setState
   const effectiveSelectedFoodId = useMemo(() => {
     if (selectedFoodId) return selectedFoodId;
     return filteredFoods[0]?.id || "";
@@ -129,22 +238,28 @@ export default function FoodDiaryPage({ currentUser }) {
     return calcFrom100g(selectedFood, grams);
   }, [selectedFood, grams]);
 
-  const totals = useMemo(() => {
+  const logsByMeal = useMemo(() => {
+    const map = { Breakfast: [], Lunch: [], Dinner: [], Snack: [] };
+    for (const row of logs) {
+      const k = row.meal || "Snack";
+      (map[k] ?? (map[k] = [])).push(row);
+    }
+    return map;
+  }, [logs]);
+
+  const totalsAll = useMemo(() => {
     return logs.reduce(
       (acc, row) => {
-        const f = row.Foods;
-        const r = calcFrom100g(f, row.grams);
-
-        acc.kcal += r.kcal;
+        const r = calcFrom100g(row?.Foods, row?.grams);
+        acc.calories += r.calories;
         acc.protein += r.protein;
         acc.carbs += r.carbs;
         acc.sugars += r.sugars;
         acc.fat += r.fat;
         acc.fiber += r.fiber;
-
         return acc;
       },
-      { kcal: 0, protein: 0, carbs: 0, sugars: 0, fat: 0, fiber: 0 }
+      { calories: 0, protein: 0, carbs: 0, sugars: 0, fat: 0, fiber: 0 }
     );
   }, [logs]);
 
@@ -165,24 +280,38 @@ export default function FoodDiaryPage({ currentUser }) {
       date,
       food_id: foodId,
       grams: g,
-      meal: null,
+      meal: meal || "Breakfast",
       note: null,
     });
 
     if (error) return setErr(error.message);
 
-    await loadLogs(date);
+    // reload logs (simple: refetch)
+    const { data, error: e2 } = await supabase
+      .from("FoodLogs")
+      .select(
+        `id, grams, meal, date, note, created_at,
+         Foods:food_id (
+           id, name, brand, kcal_100, protein_100, carbs_100, sugars_100, fat_100, fiber_100
+         )`
+      )
+      .eq("user_auth_id", userId)
+      .eq("date", date)
+      .order("created_at", { ascending: false });
+
+    if (e2) setErr(e2.message);
+    else setLogs(data || []);
 
     gramsRef.current?.focus?.();
     gramsRef.current?.select?.();
-  }, [currentUser?.id, effectiveSelectedFoodId, grams, date, loadLogs]);
+  }, [currentUser?.id, effectiveSelectedFoodId, grams, date, meal]);
 
-  const deleteLog = async (id) => {
+  const deleteLog = useCallback(async (id) => {
     setErr("");
     const { error } = await supabase.from("FoodLogs").delete().eq("id", id);
     if (error) return setErr(error.message);
     setLogs((prev) => prev.filter((x) => x.id !== id));
-  };
+  }, []);
 
   const onGramsKeyDown = (e) => {
     if (e.key === "Enter") addLog();
@@ -199,14 +328,22 @@ export default function FoodDiaryPage({ currentUser }) {
         </label>
       </div>
 
+      {/* ADD ENTRY */}
       <div className={styles.controls}>
+        <select className={styles.select} value={meal} onChange={(e) => setMeal(e.target.value)}>
+          {MEALS.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
+
         <input
           className={styles.select}
           placeholder="Search food… (banana, rice, chicken)"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
-            // optional: reset manual selection when searching new query
             setSelectedFoodId("");
           }}
         />
@@ -239,35 +376,14 @@ export default function FoodDiaryPage({ currentUser }) {
         </button>
       </div>
 
-      <div className={styles.controls}>
-        <button className={styles.addBtn} type="button" onClick={() => setGrams((g) => Number(g || 0) + 50)}>
-          +50g
-        </button>
-        <button className={styles.addBtn} type="button" onClick={() => setGrams((g) => Number(g || 0) + 100)}>
-          +100g
-        </button>
-        <button className={styles.addBtn} type="button" onClick={() => setGrams((g) => Number(g || 0) + 200)}>
-          +200g
-        </button>
-        <button className={styles.deleteBtn} type="button" onClick={() => setGrams(100)}>
-          reset to 100g
-        </button>
-      </div>
-
+      {/* PREVIEW */}
       {selectedFood && preview && (
         <div className={styles.tableWrap} style={{ marginBottom: "1rem" }}>
           <div className={styles.tableHeader}>
             <div className={styles.tableTitle}>
               Preview: {selectedFood.name} ({grams}g)
             </div>
-            <div className={styles.totalsMini}>
-              <div><span>Kcal:</span> {round1(preview.kcal)}</div>
-              <div><span>P:</span> {round1(preview.protein)}</div>
-              <div><span>C:</span> {round1(preview.carbs)}</div>
-              <div><span>Sugar:</span> {round1(preview.sugars)}</div>
-              <div><span>F:</span> {round1(preview.fat)}</div>
-              <div><span>Fiber:</span> {round1(preview.fiber)}</div>
-            </div>
+            <NutritionMini t={preview} />
           </div>
         </div>
       )}
@@ -275,74 +391,19 @@ export default function FoodDiaryPage({ currentUser }) {
       {err && <p className={styles.error}>{err}</p>}
       {loading && <p className={styles.loading}>Loading…</p>}
 
-      <div className={styles.tableWrap}>
+      {/* DAILY TOTAL */}
+      <div className={styles.tableWrap} style={{ marginTop: "1rem" }}>
         <div className={styles.tableHeader}>
-          <div className={styles.tableTitle}>Entries</div>
-          <div className={styles.totalsMini}>
-            <div><span>Kcal:</span> {round1(totals.kcal)}</div>
-            <div><span>P:</span> {round1(totals.protein)}</div>
-            <div><span>C:</span> {round1(totals.carbs)}</div>
-            <div><span>Sugar:</span> {round1(totals.sugars)}</div>
-            <div><span>F:</span> {round1(totals.fat)}</div>
-            <div><span>Fiber:</span> {round1(totals.fiber)}</div>
-          </div>
+          <div className={styles.tableTitle}>Daily Total</div>
+          <NutritionMini t={totalsAll} />
         </div>
-
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th className={styles.th}>Food</th>
-              <th className={styles.th}>Grams</th>
-              <th className={styles.th}>Kcal</th>
-              <th className={styles.th}>P</th>
-              <th className={styles.th}>C</th>
-              <th className={styles.th}>Sugar</th>
-              <th className={styles.th}>F</th>
-              <th className={styles.th}>Fiber</th>
-              <th className={styles.th}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((row) => {
-              const f = row.Foods;
-              const r = calcFrom100g(f, row.grams);
-
-              return (
-                <tr key={row.id} className={styles.tr}>
-                  <td className={`${styles.td} ${styles.foodCell}`}>
-                    <div className={styles.foodName}>{f?.name}</div>
-                    {f?.brand ? <div className={styles.foodBrand}>{f.brand}</div> : null}
-                  </td>
-                  <td className={styles.td}>{row.grams}</td>
-                  <td className={styles.td}>{round1(r.kcal)}</td>
-                  <td className={styles.td}>{round1(r.protein)}</td>
-                  <td className={styles.td}>{round1(r.carbs)}</td>
-                  <td className={styles.td}>{round1(r.sugars)}</td>
-                  <td className={styles.td}>{round1(r.fat)}</td>
-                  <td className={styles.td}>{round1(r.fiber)}</td>
-                  <td className={styles.td}>
-                    <button className={styles.deleteBtn} onClick={() => deleteLog(row.id)}>
-                      ✕
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-
-            <tr className={styles.totalRow}>
-              <td className={`${styles.td} ${styles.totalLabel}`}>Total</td>
-              <td className={styles.td}></td>
-              <td className={styles.td}>{round1(totals.kcal)}</td>
-              <td className={styles.td}>{round1(totals.protein)}</td>
-              <td className={styles.td}>{round1(totals.carbs)}</td>
-              <td className={styles.td}>{round1(totals.sugars)}</td>
-              <td className={styles.td}>{round1(totals.fat)}</td>
-              <td className={styles.td}>{round1(totals.fiber)}</td>
-              <td className={styles.td}></td>
-            </tr>
-          </tbody>
-        </table>
       </div>
+
+      {/* MEAL SECTIONS */}
+      <MealTable title="Breakfast" rows={logsByMeal.Breakfast} onDelete={deleteLog} />
+      <MealTable title="Lunch" rows={logsByMeal.Lunch} onDelete={deleteLog} />
+      <MealTable title="Dinner" rows={logsByMeal.Dinner} onDelete={deleteLog} />
+      <MealTable title="Snack" rows={logsByMeal.Snack} onDelete={deleteLog} />
     </div>
   );
 }

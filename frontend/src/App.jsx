@@ -13,8 +13,13 @@ import ExercisesPage from "./pages/ExercisesPage";
 import LogWorkoutPage from "./pages/LogWorkoutPage";
 import WorkoutsFeedPage from "./pages/WorkoutsFeedPage";
 import CaloriePage from "./pages/CaloriePage";
-import FoodDiaryPage from "./pages/FoodDiaryPage";  
+import FoodDiaryPage from "./pages/FoodDiaryPage";
 
+// ✅ NEW LEGAL/INFO PAGES
+import AboutPage from "./pages/AboutPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
+import CookiesPage from "./pages/CookiesPage";
 
 import styles from "./App.module.css";
 
@@ -59,7 +64,6 @@ function App() {
   };
 
   const handleUpdateProfile = (updatedUser) => {
-    // ако искаш да държиш профилната инфо отделно, това може да стане по-късно
     setCurrentUser((prev) => updatedUser ?? prev);
   };
 
@@ -94,7 +98,6 @@ function App() {
     <div className={styles.app}>
       <Header setPage={setPage} onLogout={handleLogout} />
 
-
       <Navigation page={page} setPage={setPage} />
 
       <main className={styles.container}>
@@ -118,9 +121,15 @@ function App() {
 
         {page === "food-diary" && <FoodDiaryPage currentUser={currentUser} />}
 
+        {/* ✅ NEW pages from Footer */}
+        {page === "about" && <AboutPage setPage={setPage} />}
+        {page === "privacy" && <PrivacyPolicyPage setPage={setPage} />}
+        {page === "terms" && <TermsPage setPage={setPage} />}
+        {page === "cookies" && <CookiesPage setPage={setPage} />}
       </main>
 
-      <Footer />
+      {/* ✅ IMPORTANT: pass setPage so Footer buttons work */}
+      <Footer setPage={setPage} />
     </div>
   );
 }

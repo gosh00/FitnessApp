@@ -1,16 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import "./Header.css";
 import { supabase } from "../supabaseClient";
+import TrainifyLogo from "../components/TrainifyLogo";
+
+const DEFAULT_AVATAR = "/default-avatar.png";
+
+function withBust(url, token) {
+  if (!url) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}t=${token}`;
+}
 
 const Header = ({ setPage, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
-
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // ✅ changes when avatar/profile is updated → forces new avatar URL
+  const [avatarVersion, setAvatarVersion] = useState(() => Date.now());
 
   const [userStats, setUserStats] = useState({
     displayName: "User",
-    avatarUrl: null,
+    avatarUrl: null, // raw base URL (no cache bust here)
     streak: 0,
     level: 1,
     levelProgressPct: 0,
@@ -29,8 +40,8 @@ const Header = ({ setPage, onLogout }) => {
   useEffect(() => {
     let isMounted = true;
 
-    const loadHeaderStats = async () => {
-      setLoading(true);
+    const loadHeaderStats = async ({ silent = false } = {}) => {
+      if (!silent) setLoading(true);
       setPageError("");
 
       try {
@@ -40,7 +51,6 @@ const Header = ({ setPage, onLogout }) => {
 
         const authUser = authRes.user;
 
-        // ✅ Correct column: avatar_url
         const { data: userRow, error: uErr } = await supabase
           .from("Users")
           .select("id, auth_id, display_name, avatar_url")
@@ -51,21 +61,17 @@ const Header = ({ setPage, onLogout }) => {
         if (!userRow) throw new Error("No Users row found.");
 
         const appUserId = userRow.id;
-
         const displayName = userRow.display_name || authUser.email || "User";
 
         // ✅ Resolve avatar from DB (avatar_url)
-        // Works for:
-        // - full URL: https://...
-        // - storage path: avatars/xxx.png  (bucket assumed "avatars")
         let avatarUrl = null;
         const rawAvatar = userRow.avatar_url;
 
         if (rawAvatar) {
           if (/^https?:\/\//i.test(rawAvatar)) {
-            avatarUrl = rawAvatar;
+            avatarUrl = rawAvatar; // full URL
           } else {
-            // If you use Supabase Storage and store only the path
+            // storage path
             const { data } = supabase.storage.from("avatars").getPublicUrl(rawAvatar);
             avatarUrl = data?.publicUrl || null;
           }
@@ -98,7 +104,7 @@ const Header = ({ setPage, onLogout }) => {
 
         setUserStats({
           displayName,
-          avatarUrl,
+          avatarUrl, // store base url only (no bust)
           streak,
           level,
           levelProgressPct,
@@ -107,18 +113,28 @@ const Header = ({ setPage, onLogout }) => {
         if (!isMounted) return;
         setPageError(e?.message || "Failed to load header stats.");
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted && !silent) setLoading(false);
+        if (isMounted && silent) setLoading(false); // ensure first load ends
       }
     };
 
     loadHeaderStats();
 
-    const onSaved = () => loadHeaderStats();
-    window.addEventListener("workout_saved", onSaved);
+    const onWorkoutSaved = () => loadHeaderStats({ silent: true });
+
+    const onProfileSaved = () => {
+      // ✅ change version so avatar URL becomes new
+      setAvatarVersion(Date.now());
+      loadHeaderStats({ silent: true });
+    };
+
+    window.addEventListener("workout_saved", onWorkoutSaved);
+    window.addEventListener("profile_saved", onProfileSaved);
 
     return () => {
       isMounted = false;
-      window.removeEventListener("workout_saved", onSaved);
+      window.removeEventListener("workout_saved", onWorkoutSaved);
+      window.removeEventListener("profile_saved", onProfileSaved);
     };
   }, []);
 
@@ -134,68 +150,41 @@ const Header = ({ setPage, onLogout }) => {
     return () => document.removeEventListener("mousedown", onDown);
   }, [isProfileOpen]);
 
-  const initials = useMemo(() => {
-    const n = (userStats.displayName || "").trim();
-    if (!n) return "U";
-    const parts = n.split(/\s+/);
-    return (parts[0][0] + (parts[1]?.[0] || "")).toUpperCase();
-  }, [userStats.displayName]);
+  // ✅ final src with cache-bust
+  const avatarSrc = useMemo(() => {
+    const base = userStats.avatarUrl || DEFAULT_AVATAR;
+    return withBust(base, avatarVersion);
+  }, [userStats.avatarUrl, avatarVersion]);
 
   return (
     <header className="header">
       <div className="header-container header-compact">
         {/* LEFT */}
-        <div className="header-left header-left-profile profile-area" style={{ position: "relative" }}>
-          <button
-            onClick={() => setIsProfileOpen((v) => !v)}
-            className="profile-chip"
-            style={{
-              background: "transparent",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              color: "inherit",
-              font: "inherit",
-            }}
-          >
-            {userStats.avatarUrl ? (
-              <img src={userStats.avatarUrl} alt="avatar" className="profile-avatar" />
-            ) : (
-              <div className="profile-avatar fallback">{initials}</div>
-            )}
+        <div className="header-left header-left-profile profile-area">
+          <button onClick={() => setIsProfileOpen((v) => !v)} className="profile-chip">
+            <img
+              key={avatarSrc} // ✅ forces re-render if url changes
+              src={avatarSrc}
+              alt="avatar"
+              className="profile-avatar"
+              onError={(e) => {
+                e.currentTarget.src = DEFAULT_AVATAR;
+              }}
+            />
 
             <span className="profile-name">{userStats.displayName}</span>
-            <span style={{ fontSize: 12, opacity: 0.8 }}>▾</span>
+            <span className="profile-caret">▾</span>
           </button>
 
           {isProfileOpen && (
-            <div
-              className="profile-dropdown"
-              style={{
-                position: "absolute",
-                top: "calc(100% + 8px)",
-                left: 0,
-                minWidth: 200,
-                background: "white",
-                border: "1px solid rgba(0,0,0,0.08)",
-                borderRadius: 10,
-                boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
-                overflow: "hidden",
-                zIndex: 50,
-              }}
-            >
-              <button onClick={goToProfile} style={dropdownBtnStyle}>👤 Profile</button>
+            <div className="profile-dropdown">
+              <button onClick={goToProfile}>👤 Profile</button>
               <div style={{ height: 1, background: "rgba(0,0,0,0.06)" }} />
-              <button onClick={handleLogout} style={{ ...dropdownBtnStyle, color: "#B00020" }}>
-                🚪 Logout
-              </button>
+              <button onClick={handleLogout}>🚪 Logout</button>
             </div>
           )}
 
-          <div className="user-level compact" style={{ marginTop: 8 }}>
+          <div className="user-level compact">
             <span className="level-label">Level {userStats.level}</span>
             <div className="level-progress">
               <div className="level-fill" style={{ width: `${userStats.levelProgressPct}%` }} />
@@ -205,12 +194,11 @@ const Header = ({ setPage, onLogout }) => {
 
         {/* CENTER */}
         <div className="header-center">
-          <div className="header-logo-text">
-            Trainify<span className="header-logo-dot"></span>
-          </div>
+          <TrainifyLogo as="div" className="header-logo-text" />
           <div className="header-logo-tagline">Fitness Tracking</div>
-          {loading && <p style={{ fontSize: 12, marginTop: 6 }}>Loading…</p>}
-          {pageError && <p style={{ fontSize: 12, marginTop: 6, color: "salmon" }}>{pageError}</p>}
+
+          {loading && <p>Loading…</p>}
+          {pageError && <p style={{ color: "salmon" }}>{pageError}</p>}
         </div>
 
         {/* RIGHT */}
@@ -223,16 +211,6 @@ const Header = ({ setPage, onLogout }) => {
       </div>
     </header>
   );
-};
-
-const dropdownBtnStyle = {
-  width: "100%",
-  textAlign: "left",
-  padding: "10px 12px",
-  background: "white",
-  border: "none",
-  cursor: "pointer",
-  fontSize: 13,
 };
 
 function calcStreakDaysFromLogs(logs) {
@@ -251,9 +229,7 @@ function calcStreakDaysFromLogs(logs) {
     if (days.has(key)) {
       streak++;
       d.setDate(d.getDate() - 1);
-    } else {
-      break;
-    }
+    } else break;
   }
 
   return streak;
