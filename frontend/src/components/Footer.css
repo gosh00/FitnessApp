@@ -17,7 +17,6 @@
 }
 
 .tf-footer {
-  margin-top: 28px;
   background: linear-gradient(135deg, #1b1b1f 0%, #141417 100%);
   color: var(--tf-text);
   border-top: 1px solid rgba(255,255,255,0.08);

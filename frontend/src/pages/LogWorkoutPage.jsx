@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { supabase } from "../supabaseClient";
 import styles from "./LogWorkoutPage.module.css";
 import sharedStyles from "../styles/shared.module.css";
-import { supabase } from "../supabaseClient";
 import ExercisePicker from "../components/ExercisePicker";
 
 function getLocalDateKey() {
@@ -9,14 +9,13 @@ function getLocalDateKey() {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`; // YYYY-MM-DD (local)
+  return `${y}-${m}-${d}`;
 }
 
 export default function LogWorkoutPage() {
   const [workoutName, setWorkoutName] = useState("");
   const [isPublic, setIsPublic] = useState(false);
 
-  // store full exercise object instead of id
   const [exerciseBlocks, setExerciseBlocks] = useState([
     { exercise: null, sets: [{ reps: "", weight: "", unit: "kg" }] },
   ]);
@@ -28,7 +27,6 @@ export default function LogWorkoutPage() {
   const [appUserId, setAppUserId] = useState(null);
   const [muscleOptions, setMuscleOptions] = useState([]);
 
-  // toast instead of alert
   const [showSavedToast, setShowSavedToast] = useState(false);
 
   useEffect(() => {
@@ -39,15 +37,13 @@ export default function LogWorkoutPage() {
       setPageError("");
 
       try {
-        // 1) auth user
         const { data: authRes, error: authErr } = await supabase.auth.getUser();
         if (authErr) throw authErr;
-        if (!authRes?.user) throw new Error("No logged-in user.");
+        if (!authRes?.user) throw new Error("Няма влязъл потребител.");
 
         const authId = authRes.user.id;
         const authEmail = authRes.user.email ?? "";
 
-        // 2) ensure Users row exists, get Users.id
         const { data: existing, error: userErr } = await supabase
           .from("Users")
           .select("id, auth_id, email")
@@ -59,7 +55,7 @@ export default function LogWorkoutPage() {
         let userRow = existing;
 
         if (!userRow) {
-          const defaultName = authEmail ? authEmail.split("@")[0] : "User";
+          const defaultName = authEmail ? authEmail.split("@")[0] : "Потребител";
 
           const { data: inserted, error: insErr } = await supabase
             .from("Users")
@@ -76,7 +72,6 @@ export default function LogWorkoutPage() {
           userRow = inserted;
         }
 
-        // 3) load muscle groups only
         const { data: mgRows, error: mgErr } = await supabase
           .from("Exercises")
           .select("muscle_group")
@@ -92,7 +87,7 @@ export default function LogWorkoutPage() {
         setMuscleOptions(uniq);
       } catch (e) {
         if (!isMounted) return;
-        setPageError(e?.message || "Failed to initialize page.");
+        setPageError(e?.message || "Неуспешна инициализация на страницата.");
       } finally {
         if (isMounted) setLoadingInit(false);
       }
@@ -160,12 +155,12 @@ export default function LogWorkoutPage() {
     setPageError("");
 
     if (!appUserId) {
-      setPageError("No user profile found. Please re-login.");
+      setPageError("Не е намерен потребителски профил. Моля, влез отново.");
       return;
     }
 
     if (!workoutName.trim()) {
-      setPageError("Please enter a workout name.");
+      setPageError("Моля, въведи име на тренировката.");
       return;
     }
 
@@ -186,14 +181,13 @@ export default function LogWorkoutPage() {
       .filter((b) => b.sets.length > 0);
 
     if (cleanedExercises.length === 0) {
-      setPageError("Add at least one exercise with one set.");
+      setPageError("Добави поне едно упражнение с поне една серия.");
       return;
     }
 
     setSaving(true);
 
     try {
-      // 1) Workouts jsonb
       const workoutData = {
         exercises: cleanedExercises,
         createdAt: new Date().toISOString(),
@@ -208,7 +202,6 @@ export default function LogWorkoutPage() {
 
       if (wErr) throw wErr;
 
-      // 2) ExerciseLog (1 row per set) with LOCAL date key
       const todayKey = getLocalDateKey();
 
       const logRows = [];
@@ -228,185 +221,147 @@ export default function LogWorkoutPage() {
       const { error: logErr } = await supabase.from("ExerciseLog").insert(logRows);
       if (logErr) throw logErr;
 
-      // ✅ Toast + refresh header
       setShowSavedToast(true);
       window.dispatchEvent(new Event("workout_saved"));
       setTimeout(() => setShowSavedToast(false), 2000);
 
-      // reset
       setWorkoutName("");
       setIsPublic(false);
       setExerciseBlocks([{ exercise: null, sets: [{ reps: "", weight: "", unit: "kg" }] }]);
     } catch (err) {
       console.error(err);
-      setPageError(err?.message || "Error saving workout");
+      setPageError(err?.message || "Грешка при запазване на тренировката.");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className={sharedStyles.card}>
-      <h2 className={styles.title}>Create Workout</h2>
+    <div className={styles.wrapper}>
+      <div className={styles.card}>
+        <h2 className={styles.title}>Създай тренировка</h2>
 
-      {pageError && <div style={{ color: "red", marginBottom: 10 }}>{pageError}</div>}
+        {pageError && <div className={styles.error}>{pageError}</div>}
 
-      <div className={styles.workoutHeader}>
-        <div className={sharedStyles.formGroup}>
-          <label className={sharedStyles.formLabel}>Workout name</label>
-          <input
-            className={sharedStyles.input}
-            value={workoutName}
-            onChange={(e) => setWorkoutName(e.target.value)}
-            placeholder="e.g. Push day, Leg day, Full body"
-          />
-        </div>
-
-        <label className={styles.checkboxLabel}>
-          <input
-            type="checkbox"
-            checked={isPublic}
-            onChange={(e) => setIsPublic(e.target.checked)}
-          />
-          Make this workout public (visible to other users)
-        </label>
-      </div>
-
-      {loadingInit && <div className={sharedStyles.loading}>Loading...</div>}
-
-      {exerciseBlocks.map((block, i) => (
-        <div key={i} className={styles.exerciseBlock}>
-          <div className={styles.exerciseHeader}>
-            <ExercisePicker
-              valueExercise={block.exercise}
-              onPickExercise={(ex) => changeExercise(i, ex)}
-              disabled={loadingInit}
-              muscleOptions={muscleOptions}
+        <div className={styles.workoutHeader}>
+          <div className={sharedStyles.formGroup}>
+            <label className={sharedStyles.formLabel}>Име на тренировка</label>
+            <input
+              className={sharedStyles.input}
+              value={workoutName}
+              onChange={(e) => setWorkoutName(e.target.value)}
+              placeholder="напр. Push ден, Leg ден, Цяло тяло"
             />
-
-            {exerciseBlocks.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeExerciseBlock(i)}
-                className={styles.removeButton}
-              >
-                Remove exercise
-              </button>
-            )}
           </div>
 
-          <div>
-            {block.sets.map((set, si) => (
-              <div key={si} className={styles.setRow}>
-                <span className={styles.setLabel}>Set {si + 1}:</span>
-
-                <input
-                  type="number"
-                  placeholder="Reps"
-                  className={`${sharedStyles.input} ${styles.smallInput}`}
-                  value={set.reps}
-                  onChange={(e) => changeSetField(i, si, "reps", e.target.value)}
-                />
-
-                <input
-                  type="number"
-                  placeholder="Weight"
-                  className={`${sharedStyles.input} ${styles.smallInput}`}
-                  value={set.weight}
-                  onChange={(e) => changeSetField(i, si, "weight", e.target.value)}
-                />
-
-                <select
-                  value={set.unit}
-                  onChange={(e) => changeSetField(i, si, "unit", e.target.value)}
-                  className={`${sharedStyles.select} ${styles.smallSelect}`}
-                >
-                  <option value="kg">kg</option>
-                  <option value="lb">lb</option>
-                </select>
-
-                {block.sets.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeSetFromBlock(i, si)}
-                    className={styles.removeButton}
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
-
-            <button
-              type="button"
-              onClick={() => addSetToBlock(i)}
-              className={styles.addButton}
-            >
-              + Add set
-            </button>
-          </div>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+            />
+            Направи тренировката публична (видима за други потребители)
+          </label>
         </div>
-      ))}
-      
-      <div className={styles.actionButtons}>
-        <button type="button" onClick={addExerciseBlock} className={sharedStyles.secondaryButton}>
-          + Add exercise
-        </button>
 
-        <button
-          type="button"
-          onClick={handleSaveWorkout}
-          disabled={saving || loadingInit}
-          className={sharedStyles.primaryButton}
-        >
-          {saving ? "Saving..." : "Save workout"}
-        </button>
+        {loadingInit && <div className={sharedStyles.loading}>Зареждане…</div>}
+
+        {exerciseBlocks.map((block, i) => (
+          <div key={i} className={styles.exerciseBlock}>
+            <div className={styles.exerciseHeader}>
+              <ExercisePicker
+                valueExercise={block.exercise}
+                onPickExercise={(ex) => changeExercise(i, ex)}
+                disabled={loadingInit}
+                muscleOptions={muscleOptions}
+              />
+
+              {exerciseBlocks.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeExerciseBlock(i)}
+                  className={styles.removeButton}
+                >
+                  Премахни упражнение
+                </button>
+              )}
+            </div>
+
+            <div>
+              {block.sets.map((set, si) => (
+                <div key={si} className={styles.setRow}>
+                  <span className={styles.setLabel}>Серия {si + 1}:</span>
+
+                  <input
+                    type="number"
+                    placeholder="Повт."
+                    className={`${sharedStyles.input} ${styles.smallInput}`}
+                    value={set.reps}
+                    onChange={(e) => changeSetField(i, si, "reps", e.target.value)}
+                  />
+
+                  <input
+                    type="number"
+                    placeholder="Тежест"
+                    className={`${sharedStyles.input} ${styles.smallInput}`}
+                    value={set.weight}
+                    onChange={(e) => changeSetField(i, si, "weight", e.target.value)}
+                  />
+
+                  <select
+                    value={set.unit}
+                    onChange={(e) => changeSetField(i, si, "unit", e.target.value)}
+                    className={`${sharedStyles.select} ${styles.smallSelect}`}
+                  >
+                    <option value="kg">кг</option>
+                    <option value="lb">lb</option>
+                  </select>
+
+                  {block.sets.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeSetFromBlock(i, si)}
+                      className={styles.removeButton}
+                    >
+                      Премахни
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              <button type="button" onClick={() => addSetToBlock(i)} className={styles.addButton}>
+                + Добави серия
+              </button>
+            </div>
+          </div>
+        ))}
+
+        <div className={styles.actionButtons}>
+          <button
+            type="button"
+            onClick={addExerciseBlock}
+            className={`${sharedStyles.secondaryButton} ${styles.secondaryBtn}`}
+          >
+            + Добави упражнение
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSaveWorkout}
+            disabled={saving || loadingInit}
+            className={`${sharedStyles.primaryButton} ${styles.primaryBtn}`}
+          >
+            {saving ? "Запазване…" : "Запази тренировката"}
+          </button>
+        </div>
       </div>
 
-      {/* ✅ Toast (no alert) */}
-{showSavedToast && (
-  <div
-    style={{
-      position: "fixed",
-      top: 16,
-      left: "50%",
-      transform: "translateX(-50%)", // ✅ keep centering always
-      background: "#0f172a",
-      color: "white",
-      padding: "16px 26px",
-      borderRadius: 16,
-      boxShadow: "0 14px 40px rgba(0,0,0,0.35)",
-      fontSize: 17,
-      fontWeight: 700,
-      zIndex: 9999,
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      border: "1px solid rgba(255,255,255,0.15)",
-      minWidth: 320,
-      justifyContent: "center",
-
-      animation: "toastSlideDown 0.35s ease-out",
-    }}
-  >
-    <span style={{ fontSize: 22 }}>✅</span>
-    <span>Workout saved!</span>
-
-    <style>{`
-      @keyframes toastSlideDown {
-        from {
-          opacity: 0;
-          transform: translateX(-50%) translateY(-12px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(-50%) translateY(0);
-        }
-      }
-    `}</style>
-  </div>
-)}
-
+      {showSavedToast && (
+        <div className={styles.toast} role="status" aria-live="polite">
+          <span className={styles.toastIcon}>✅</span>
+          <span className={styles.toastText}>Тренировката е запазена!</span>
+        </div>
+      )}
     </div>
   );
 }

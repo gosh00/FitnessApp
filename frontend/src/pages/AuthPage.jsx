@@ -20,7 +20,7 @@ const AuthPage = ({ onLogin, setPage }) => {
     firstName: "",
     lastName: "",
     username: "",
-    gender: "Female", // ✅ NEW
+    gender: "Female",
     age: "",
     weight: "",
     height: "",
@@ -49,10 +49,10 @@ const AuthPage = ({ onLogin, setPage }) => {
     const newErrors = {};
     const email = loginData.email.trim();
 
-    if (!email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Email is invalid";
+    if (!email) newErrors.email = "Имейлът е задължителен";
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Невалиден имейл адрес";
 
-    if (!loginData.password) newErrors.password = "Password is required";
+    if (!loginData.password) newErrors.password = "Паролата е задължителна";
     return newErrors;
   };
 
@@ -60,28 +60,28 @@ const AuthPage = ({ onLogin, setPage }) => {
     const newErrors = {};
     const email = registerData.email.trim();
 
-    if (!email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Email is invalid";
+    if (!email) newErrors.email = "Имейлът е задължителен";
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Невалиден имейл адрес";
 
-    if (!registerData.password) newErrors.password = "Password is required";
+    if (!registerData.password) newErrors.password = "Паролата е задължителна";
     else if (registerData.password.length < 6)
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = "Паролата трябва да е поне 6 символа";
 
     if (registerData.password !== registerData.confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = "Паролите не съвпадат";
 
-    if (!registerData.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!registerData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!registerData.username.trim()) newErrors.username = "Username is required";
+    if (!registerData.firstName.trim()) newErrors.firstName = "Името е задължително";
+    if (!registerData.lastName.trim()) newErrors.lastName = "Фамилията е задължителна";
+    if (!registerData.username.trim()) newErrors.username = "Потребителското име е задължително";
 
-    if (!registerData.gender) newErrors.gender = "Gender is required"; // ✅ NEW
+    if (!registerData.gender) newErrors.gender = "Полът е задължителен";
 
-    if (!registerData.age) newErrors.age = "Age is required";
+    if (!registerData.age) newErrors.age = "Възрастта е задължителна";
     else if (+registerData.age < 13 || +registerData.age > 120)
-      newErrors.age = "Age must be between 13 and 120";
+      newErrors.age = "Възрастта трябва да е между 13 и 120";
 
-    if (!registerData.weight) newErrors.weight = "Weight is required";
-    if (!registerData.height) newErrors.height = "Height is required";
+    if (!registerData.weight) newErrors.weight = "Теглото е задължително";
+    if (!registerData.height) newErrors.height = "Ръстът е задължителен";
 
     return newErrors;
   };
@@ -109,7 +109,7 @@ const AuthPage = ({ onLogin, setPage }) => {
             display_name: registerData.username.trim(),
             first_name: registerData.firstName.trim(),
             last_name: registerData.lastName.trim(),
-            gender: registerData.gender, // ✅ NEW
+            gender: registerData.gender,
             age: Number(registerData.age),
             weight: Number(registerData.weight),
             height: Number(registerData.height),
@@ -120,10 +120,10 @@ const AuthPage = ({ onLogin, setPage }) => {
 
       if (error) throw error;
 
-      setSuccess("✅ Account created! Please confirm your email, then Sign In.");
+      setSuccess("✅ Профилът е създаден! Потвърди имейла си и след това влез в системата.");
       setActiveTab("login");
     } catch (err) {
-      setFormError(err?.message || "Registration failed.");
+      setFormError(err?.message || "Регистрацията е неуспешна.");
     } finally {
       setSubmitting(false);
     }
@@ -154,7 +154,7 @@ const AuthPage = ({ onLogin, setPage }) => {
       if (freshErr) throw freshErr;
 
       const user = fresh?.user;
-      if (!user) throw new Error("No user returned from Supabase (getUser).");
+      if (!user) throw new Error("Няма върнат потребител от Supabase (getUser).");
 
       const meta = user.user_metadata || {};
 
@@ -164,7 +164,7 @@ const AuthPage = ({ onLogin, setPage }) => {
         display_name: meta.display_name ?? null,
         first_name: meta.first_name ?? null,
         last_name: meta.last_name ?? null,
-        gender: meta.gender ?? null, // ✅ NEW
+        gender: meta.gender ?? null,
         age: meta.age ?? null,
         weight: meta.weight ?? null,
         height: meta.height ?? null,
@@ -177,12 +177,12 @@ const AuthPage = ({ onLogin, setPage }) => {
 
       if (upsertErr) throw upsertErr;
 
-      setSuccess("✅ Logged in!");
+      setSuccess("✅ Успешен вход!");
       goHome(user);
     } catch (err) {
-      const msg = err?.message || "Login failed.";
+      const msg = err?.message || "Входът е неуспешен.";
       if (msg.toLowerCase().includes("email not confirmed")) {
-        setFormError("Имейлът не е потвърден. Отвори пощата и натисни Confirm линка.");
+        setFormError("Имейлът не е потвърден. Провери пощата си и натисни линка за потвърждение.");
       } else {
         setFormError(msg);
       }
@@ -197,37 +197,36 @@ const AuthPage = ({ onLogin, setPage }) => {
         {/* LEFT */}
         <div className={styles.left}>
           <div className={styles.brand}>
-<h1 className={styles.logo}>
-  Trainify<span className={styles.logoDot}></span>
-</h1>
-<p className={styles.tagline}>
-  Your personal fitness tracker for workouts, nutrition, and progress monitoring
-</p>
-
+            <h1 className={styles.logo}>
+              Trainify<span className={styles.logoDot}></span>
+            </h1>
+            <p className={styles.tagline}>
+              Твоят личен фитнес тракер за тренировки, хранене и проследяване на прогреса
+            </p>
           </div>
 
           <div className={styles.features}>
             <div className={styles.featureItem}>
               <div className={styles.featureIcon}>📊</div>
               <div className={styles.featureText}>
-                <h4>Track Progress</h4>
-                <p>Monitor your workouts and see your improvements over time</p>
+                <h4>Следи прогреса</h4>
+                <p>Записвай тренировките си и виж как се подобряваш с времето</p>
               </div>
             </div>
 
             <div className={styles.featureItem}>
               <div className={styles.featureIcon}>🎯</div>
               <div className={styles.featureText}>
-                <h4>Set Goals</h4>
-                <p>Customize your fitness objectives and track your achievements</p>
+                <h4>Поставяй цели</h4>
+                <p>Персонализирай целите си и следи постиженията си</p>
               </div>
             </div>
 
             <div className={styles.featureItem}>
               <div className={styles.featureIcon}>📱</div>
               <div className={styles.featureText}>
-                <h4>Anywhere Access</h4>
-                <p>Access your fitness data from any device, anytime</p>
+                <h4>Достъп отвсякъде</h4>
+                <p>Достъпвай данните си от всяко устройство, по всяко време</p>
               </div>
             </div>
           </div>
@@ -245,7 +244,7 @@ const AuthPage = ({ onLogin, setPage }) => {
                 resetMessages();
               }}
             >
-              Sign In
+              Вход
             </button>
 
             <button
@@ -257,7 +256,7 @@ const AuthPage = ({ onLogin, setPage }) => {
                 resetMessages();
               }}
             >
-              Create Account
+              Създай профил
             </button>
           </div>
 
@@ -269,10 +268,10 @@ const AuthPage = ({ onLogin, setPage }) => {
             className={`${styles.form} ${activeTab === "login" ? styles.formActive : ""}`}
             onSubmit={handleLoginSubmit}
           >
-            <h2 className={styles.formTitle}>Welcome Back</h2>
+            <h2 className={styles.formTitle}>Добре дошъл/дошла отново</h2>
 
             <div className={styles.formGroup}>
-              <label className={styles.label}>Email</label>
+              <label className={styles.label}>Имейл</label>
               <input
                 type="email"
                 name="email"
@@ -285,13 +284,13 @@ const AuthPage = ({ onLogin, setPage }) => {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.label}>Password</label>
+              <label className={styles.label}>Парола</label>
               <div className={styles.passwordInput}>
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
                   className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
-                  placeholder="Enter your password"
+                  placeholder="Въведи паролата си"
                   value={loginData.password}
                   onChange={handleLoginChange}
                 />
@@ -299,6 +298,7 @@ const AuthPage = ({ onLogin, setPage }) => {
                   type="button"
                   className={styles.togglePassword}
                   onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Скрий паролата" : "Покажи паролата"}
                 >
                   {showPassword ? "🙈" : "👁️"}
                 </button>
@@ -307,13 +307,13 @@ const AuthPage = ({ onLogin, setPage }) => {
             </div>
 
             <button type="submit" className={styles.submitBtn} disabled={submitting}>
-              {submitting ? "Signing in..." : "Sign In"}
+              {submitting ? "Влизане..." : "Вход"}
             </button>
 
             <div className={styles.formSwitch}>
-              Don&apos;t have an account?
+              Нямаш профил?
               <span className={styles.switchLink} onClick={() => setActiveTab("register")}>
-                Sign up here
+                Регистрирай се
               </span>
             </div>
           </form>
@@ -323,32 +323,32 @@ const AuthPage = ({ onLogin, setPage }) => {
             className={`${styles.form} ${activeTab === "register" ? styles.formActive : ""}`}
             onSubmit={handleRegisterSubmit}
           >
-            <h2 className={styles.formTitle}>Create Account</h2>
+            <h2 className={styles.formTitle}>Създай профил</h2>
 
             <div className={styles.formGroup}>
               <div className={styles.formRow}>
                 <div>
-                  <label className={styles.label}>First Name</label>
+                  <label className={styles.label}>Име</label>
                   <input
                     type="text"
                     name="firstName"
                     className={`${styles.input} ${errors.firstName ? styles.inputError : ""}`}
                     value={registerData.firstName}
                     onChange={handleRegisterChange}
-                    placeholder="John"
+                    placeholder="Иван"
                   />
                   {errors.firstName && <span className={styles.error}>{errors.firstName}</span>}
                 </div>
 
                 <div>
-                  <label className={styles.label}>Last Name</label>
+                  <label className={styles.label}>Фамилия</label>
                   <input
                     type="text"
                     name="lastName"
                     className={`${styles.input} ${errors.lastName ? styles.inputError : ""}`}
                     value={registerData.lastName}
                     onChange={handleRegisterChange}
-                    placeholder="Doe"
+                    placeholder="Иванов"
                   />
                   {errors.lastName && <span className={styles.error}>{errors.lastName}</span>}
                 </div>
@@ -356,7 +356,7 @@ const AuthPage = ({ onLogin, setPage }) => {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.label}>Email</label>
+              <label className={styles.label}>Имейл</label>
               <input
                 type="email"
                 name="email"
@@ -369,31 +369,31 @@ const AuthPage = ({ onLogin, setPage }) => {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.label}>Username</label>
+              <label className={styles.label}>Потребителско име</label>
               <input
                 type="text"
                 name="username"
                 className={`${styles.input} ${errors.username ? styles.inputError : ""}`}
                 value={registerData.username}
                 onChange={handleRegisterChange}
-                placeholder="johndoe123"
+                placeholder="ivanivanov"
               />
               {errors.username && <span className={styles.error}>{errors.username}</span>}
             </div>
 
-            {/* ✅ NEW: Gender dropdown */}
+            {/* Gender dropdown */}
             <div className={styles.formGroup}>
-              <label className={styles.label}>Gender</label>
+              <label className={styles.label}>Пол</label>
               <select
                 name="gender"
                 className={`${styles.select} ${errors.gender ? styles.inputError : ""}`}
                 value={registerData.gender}
                 onChange={handleRegisterChange}
               >
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
-                <option value="Other">Other</option>
-                <option value="Prefer not to say">Prefer not to say</option>
+                <option value="Female">Жена</option>
+                <option value="Male">Мъж</option>
+                <option value="Other">Друго</option>
+                <option value="Prefer not to say">Предпочитам да не споделям</option>
               </select>
               {errors.gender && <span className={styles.error}>{errors.gender}</span>}
             </div>
@@ -401,7 +401,7 @@ const AuthPage = ({ onLogin, setPage }) => {
             <div className={styles.formGroup}>
               <div className={styles.formRow}>
                 <div>
-                  <label className={styles.label}>Password</label>
+                  <label className={styles.label}>Парола</label>
                   <div className={styles.passwordInput}>
                     <input
                       type={showPassword ? "text" : "password"}
@@ -409,12 +409,13 @@ const AuthPage = ({ onLogin, setPage }) => {
                       className={`${styles.input} ${errors.password ? styles.inputError : ""}`}
                       value={registerData.password}
                       onChange={handleRegisterChange}
-                      placeholder="Create password"
+                      placeholder="Създай парола"
                     />
                     <button
                       type="button"
                       className={styles.togglePassword}
                       onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? "Скрий паролата" : "Покажи паролата"}
                     >
                       {showPassword ? "🙈" : "👁️"}
                     </button>
@@ -423,14 +424,14 @@ const AuthPage = ({ onLogin, setPage }) => {
                 </div>
 
                 <div>
-                  <label className={styles.label}>Confirm Password</label>
+                  <label className={styles.label}>Потвърди парола</label>
                   <input
                     type={showPassword ? "text" : "password"}
                     name="confirmPassword"
                     className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ""}`}
                     value={registerData.confirmPassword}
                     onChange={handleRegisterChange}
-                    placeholder="Confirm password"
+                    placeholder="Повтори паролата"
                   />
                   {errors.confirmPassword && (
                     <span className={styles.error}>{errors.confirmPassword}</span>
@@ -442,7 +443,7 @@ const AuthPage = ({ onLogin, setPage }) => {
             <div className={styles.formGroup}>
               <div className={styles.formRow}>
                 <div>
-                  <label className={styles.label}>Age</label>
+                  <label className={styles.label}>Възраст</label>
                   <input
                     type="number"
                     name="age"
@@ -457,7 +458,7 @@ const AuthPage = ({ onLogin, setPage }) => {
                 </div>
 
                 <div>
-                  <label className={styles.label}>Weight (kg)</label>
+                  <label className={styles.label}>Тегло (кг)</label>
                   <input
                     type="number"
                     name="weight"
@@ -477,7 +478,7 @@ const AuthPage = ({ onLogin, setPage }) => {
             <div className={styles.formGroup}>
               <div className={styles.formRow}>
                 <div>
-                  <label className={styles.label}>Height (cm)</label>
+                  <label className={styles.label}>Ръст (см)</label>
                   <input
                     type="number"
                     name="height"
@@ -492,23 +493,23 @@ const AuthPage = ({ onLogin, setPage }) => {
                 </div>
 
                 <div>
-                  <label className={styles.label}>Goal</label>
+                  <label className={styles.label}>Цел</label>
                   <select
                     name="goal"
                     className={styles.select}
                     value={registerData.goal}
                     onChange={handleRegisterChange}
                   >
-                    <option value="Maintain Weight">Maintain Weight</option>
-                    <option value="Gain Weight">Gain Weight</option>
-                    <option value="Weight Loss">Weight Loss</option>
+                    <option value="Maintain Weight">Поддържане</option>
+                    <option value="Gain Weight">Покачване</option>
+                    <option value="Weight Loss">Отслабване</option>
                   </select>
                 </div>
               </div>
             </div>
 
             <button type="submit" className={styles.submitBtn} disabled={submitting}>
-              {submitting ? "Creating..." : "Create Account"}
+              {submitting ? "Създаване..." : "Създай профил"}
             </button>
           </form>
         </div>

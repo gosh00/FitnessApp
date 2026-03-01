@@ -113,7 +113,7 @@ export default function ExercisePicker({
     const run = async () => {
       setPickerError("");
 
-      // Ако няма търсене и няма muscle filter -> не прави заявка (показвай Recent)
+      // Ако няма търсене и няма филтър по мускулна група -> не прави заявка (показвай Последно използвани)
       if (!debouncedQuery.trim() && !muscle) {
         setResults([]);
         return;
@@ -142,7 +142,7 @@ export default function ExercisePicker({
         setResults(data || []);
       } catch (e) {
         if (!alive) return;
-        setPickerError(e?.message || "Failed to search exercises.");
+        setPickerError(e?.message || "Неуспешно търсене на упражнения.");
       } finally {
         if (alive) setLoading(false);
       }
@@ -172,9 +172,9 @@ export default function ExercisePicker({
   const showRecent = !debouncedQuery.trim() && !muscle;
 
   const headerText = useMemo(() => {
-    if (loading) return "Searching...";
-    if (showRecent) return recent.length ? "Recent exercises" : "Start typing to search";
-    return "Select an exercise";
+    if (loading) return "Търсене...";
+    if (showRecent) return recent.length ? "Последно използвани упражнения" : "Започни да пишеш, за да търсиш";
+    return "Избери упражнение";
   }, [loading, showRecent, recent.length]);
 
   return (
@@ -184,7 +184,7 @@ export default function ExercisePicker({
           style={ui.input}
           value={query}
           disabled={disabled}
-          placeholder="Search exercise (e.g. bench, squat...)"
+          placeholder="Търси упражнение (напр. лежанка, клек...)"
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
@@ -201,7 +201,7 @@ export default function ExercisePicker({
             setOpen(true);
           }}
         >
-          <option value="">All muscles</option>
+          <option value="">Всички мускулни групи</option>
           {muscleOptions.map((m) => (
             <option key={m} value={m}>
               {m}
@@ -216,13 +216,13 @@ export default function ExercisePicker({
         <div style={ui.dropdown}>
           <div style={ui.header}>
             <div>{headerText}</div>
-            <button type="button" style={ui.closeBtn} onClick={() => setOpen(false)}>
+            <button type="button" style={ui.closeBtn} onClick={() => setOpen(false)} aria-label="Затвори">
               ✕
             </button>
           </div>
 
           {showRecent && recent.length === 0 && (
-            <div style={ui.hint}>Type at least 2–3 letters to search.</div>
+            <div style={ui.hint}>Въведи поне 2–3 букви, за да започнеш търсене.</div>
           )}
 
           {showRecent && recent.length > 0 && (
@@ -237,7 +237,7 @@ export default function ExercisePicker({
           )}
 
           {!showRecent && !loading && results.length === 0 && (
-            <div style={ui.hint}>No matches. Try another keyword.</div>
+            <div style={ui.hint}>Няма съвпадения. Опитай с друга ключова дума.</div>
           )}
 
           {!showRecent &&

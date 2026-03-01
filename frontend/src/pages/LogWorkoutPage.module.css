@@ -1,146 +1,329 @@
-/* LogWorkoutPage.module.css */
+/* LogWorkoutPage.module.css — Trainify Dark (fixed + polished) */
 
-/* layout fix */
 .wrapper {
-  max-width: 1100px;
-  margin: 24px auto;
-  padding: 24px;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 16px;
 }
 
-/* titles / text (FORCE DARK) */
+/* single clean card */
+.card {
+  background: #0b0b0b;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 20px;
+  padding: 28px;
+  overflow: hidden;
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.55);
+}
+
+/* Title */
 .title {
-  margin: 0 0 18px 0;
-  color: #111827;
-  font-weight: 800;
-  font-size: 22px;
+  margin-bottom: 20px;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
 }
 
+/* Labels */
+.wrapper :global(label) {
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+
+/* Error */
+.error {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(225, 29, 46, 0.12);
+  border: 1px solid rgba(225, 29, 46, 0.35);
+  color: #ffd3d7;
+  font-weight: 700;
+}
+
+/* Header section */
 .workoutHeader {
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
-/* checkbox row FIX (text visible) */
+/* Checkbox */
 .checkboxLabel {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-top: 12px;
-
-  color: #111827;      /* ✅ force black */
-  font-size: 14px;     /* ✅ avoid 0-size inheritance */
-  font-weight: 650;
-  line-height: 1.2;
-  user-select: none;
+  color: rgba(255, 255, 255, 0.90);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .checkboxLabel input {
   width: 18px;
   height: 18px;
-  accent-color: #e11d2e; /* ✅ red */
+  accent-color: #e11d2e;
 }
 
-/* exercise card */
+/* Make inputs/selects safe width + dark everywhere (incl. ExercisePicker) */
+.wrapper :global(input),
+.wrapper :global(select),
+.wrapper :global(textarea) {
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 12px !important;
+
+  outline: none !important;
+  box-shadow: none !important;
+
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.wrapper :global(input)::placeholder,
+.wrapper :global(textarea)::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.wrapper :global(input):hover,
+.wrapper :global(select):hover,
+.wrapper :global(textarea):hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+.wrapper :global(input):focus,
+.wrapper :global(select):focus,
+.wrapper :global(textarea):focus {
+  border-color: rgba(225, 29, 46, 0.95) !important;
+  box-shadow: 0 0 0 3px rgba(225, 29, 46, 0.18) !important;
+}
+
+/* ✅ Fix native select dropdown white options (Chrome/Edge) */
+.wrapper :global(select) {
+  color-scheme: dark;
+}
+
+.wrapper :global(select option) {
+  background: #0b0b0b !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+/* ✅ Fix selection (blue highlight) */
+.wrapper :global(::selection) {
+  background: rgba(225, 29, 46, 0.35);
+  color: #ffffff;
+}
+
+.wrapper :global(::-moz-selection) {
+  background: rgba(225, 29, 46, 0.35);
+  color: #ffffff;
+}
+
+/* Exercise block */
 .exerciseBlock {
-  border: 1px solid rgba(17, 24, 39, 0.12);
-  border-radius: 14px;
+  margin-top: 18px;
   padding: 18px;
-  margin-bottom: 16px;
-  background: #ffffff;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.38);
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-/* header row */
+.exerciseBlock:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .exerciseHeader {
   display: flex;
+  align-items: center;
   gap: 12px;
   margin-bottom: 14px;
-  align-items: center;
   flex-wrap: wrap;
 }
 
-/* sets */
+/* ✅ FIX: muscle dropdown / short select truncation */
+.exerciseHeader :global(select) {
+  min-width: 210px !important;   /* ⬅️ enough for “abdominals” */
+  width: auto !important;
+  padding-right: 44px !important; /* room for arrow */
+  flex: 0 0 auto !important;
+}
+
+/* Sets */
 .setRow {
   display: flex;
+  align-items: center;
   gap: 10px;
   margin-bottom: 10px;
-  align-items: center;
   flex-wrap: wrap;
 }
 
 .setLabel {
-  min-width: 62px;
+  min-width: 60px;
   font-weight: 800;
-  color: #374151; /* ✅ dark gray */
+  color: rgba(255, 255, 255, 0.80);
 }
 
-/* sizes */
 .smallInput {
   width: 110px;
 }
 
 .smallSelect {
   width: 100px;
-  min-width: 100px;
-  box-sizing: border-box;
-  padding-right: 32px;
 }
 
-/* buttons */
+/* Add set button */
 .addButton {
-  background: #f3f4f6;
-  color: #111827;
-  border: 1px solid rgba(17, 24, 39, 0.12);
-  padding: 10px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 800;
-  transition: transform 0.15s ease, background 0.15s ease;
   margin-top: 8px;
+  padding: 9px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
 .addButton:hover {
-  background: #e5e7eb;
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.25);
   transform: translateY(-1px);
 }
 
+/* Remove buttons inside blocks */
 .removeButton {
-  background: linear-gradient(135deg, #e11d2e, #ff3b4a);
-  color: #ffffff;
-  border: none;
-  padding: 9px 12px;
+  padding: 8px 12px;
+  background: #e11d2e;
+  border: 1px solid rgba(225, 29, 46, 0.45);
   border-radius: 12px;
+  color: #fff;
+  font-weight: 800;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 900;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 10px 22px rgba(225, 29, 46, 0.16);
 }
 
 .removeButton:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(225, 29, 46, 0.25);
+  filter: brightness(1.06);
+  box-shadow: 0 14px 30px rgba(225, 29, 46, 0.22);
 }
 
+/* Action buttons */
 .actionButtons {
+  margin-top: 22px;
   display: flex;
   gap: 12px;
-  margin-top: 18px;
   flex-wrap: wrap;
 }
 
-/* mobile */
+/* Trainify buttons (added classes in JSX) */
+.primaryBtn {
+  background: #e11d2e !important;
+  color: #fff !important;
+  border: 1px solid rgba(225, 29, 46, 0.55) !important;
+  border-radius: 12px !important;
+  font-weight: 900 !important;
+  box-shadow: 0 12px 30px rgba(225, 29, 46, 0.28) !important;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-1px) !important;
+  filter: brightness(1.05) !important;
+  box-shadow: 0 16px 40px rgba(225, 29, 46, 0.36) !important;
+}
+
+.secondaryBtn {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease !important;
+}
+
+.secondaryBtn:hover {
+  background: rgba(255, 255, 255, 0.10) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ExercisePicker dropdown panel + items (generic) */
+.wrapper :global([role="listbox"]),
+.wrapper :global([role="menu"]),
+.wrapper :global([class*="dropdown"]),
+.wrapper :global([class*="menu"]),
+.wrapper :global([class*="options"]),
+.wrapper :global([class*="suggest"]) {
+  background: #0b0b0b !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55) !important;
+}
+
+.wrapper :global([role="option"]),
+.wrapper :global([role="menuitem"]) {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.wrapper :global([role="option"]:hover),
+.wrapper :global([role="menuitem"]:hover) {
+  background: rgba(225, 29, 46, 0.16) !important;
+}
+
+.wrapper :global([role="option"][aria-selected="true"]) {
+  background: rgba(225, 29, 46, 0.26) !important;
+  color: #fff !important;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(12, 12, 12, 0.92);
+  color: white;
+  padding: 14px 22px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.60);
+  font-weight: 800;
+  z-index: 9999;
+  animation: toastSlide 0.3s ease;
+}
+
+.toastIcon {
+  font-size: 20px;
+}
+
+.toastText {
+  font-weight: 800;
+}
+
+@keyframes toastSlide {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Mobile */
 @media (max-width: 768px) {
-  .wrapper {
-    margin: 16px auto;
-    padding: 16px;
-  }
+  .card { padding: 18px; }
+  .setRow { flex-direction: column; align-items: stretch; }
+  .smallInput, .smallSelect { width: 100%; }
 
-  .setRow {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .smallInput,
-  .smallSelect {
-    width: 100%;
+  /* on mobile give select full width */
+  .exerciseHeader :global(select) {
+    min-width: 100% !important;
+    width: 100% !important;
   }
 }

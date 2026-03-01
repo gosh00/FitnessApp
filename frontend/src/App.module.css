@@ -1,41 +1,77 @@
+/* AuthPage.module.css — TRAINIFY DARK VERSION */
+
 .authCard {
   width: min(460px, 92vw);
-  background: rgba(255, 255, 252, 0.92);
-  border: 1px solid rgba(110, 131, 135, 0.45);
+
+  /* DARK BACKGROUND */
+  background: rgba(15, 15, 15, 0.96);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
   border-radius: 16px;
+
   box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.45),
-    0 1px 0 rgba(255, 255, 255, 0.35) inset;
+    0 20px 50px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255,255,255,0.03) inset;
+
   backdrop-filter: blur(10px);
+
   padding: 1.5rem;
+
+  color: #fff;
 }
 
+/* tabs row */
 .tabs {
   display: flex;
   gap: 0.75rem;
   margin-bottom: 1.25rem;
 }
 
+/* inactive tab */
 .tabButton {
   flex: 1;
-  border: 1px solid rgba(110, 131, 135, 0.55);
-  background: rgba(0, 0, 0, 0.04);
+
+  border: 1px solid rgba(255,255,255,0.12);
+
+  background: rgba(255,255,255,0.03);
+
+  color: rgba(255,255,255,0.75);
+
   padding: 0.6rem 0.9rem;
+
   border-radius: 10px;
+
   font-weight: 700;
+
   cursor: pointer;
+
+  transition: all 0.15s ease;
 }
 
+.tabButton:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+/* active tab */
 .tabButtonActive {
-  background: rgba(209, 96, 20, 0.12);
-  border-color: rgba(209, 96, 20, 0.6);
+
+  background: rgba(225, 29, 46, 0.18);
+
+  border-color: rgba(225, 29, 46, 0.6);
+
+  color: #fff;
 }
 
+/* title */
 .title {
   margin: 0 0 1rem 0;
   font-size: 1.8rem;
+  font-weight: 900;
+  color: #fff;
 }
 
+/* action buttons container */
 .actions {
   display: flex;
   gap: 0.75rem;

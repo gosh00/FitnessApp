@@ -3,7 +3,7 @@ import { supabase } from "../supabaseClient";
 import styles from "./FoodDiaryPage.module.css";
 
 const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
-const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"];
+const MEALS = ["Закуска", "Обяд", "Вечеря", "Снак"];
 
 function calcFrom100g(food, grams) {
   const g = Number(grams) || 0;
@@ -23,12 +23,12 @@ function NutritionMini({ t }) {
   if (!t) return null;
   return (
     <div className={styles.totalsMini}>
-      <div><span>Calories:</span> {round1(t.calories)}</div>
-      <div><span>Protein:</span> {round1(t.protein)}</div>
-      <div><span>Carbohydrates:</span> {round1(t.carbs)}</div>
-      <div><span>Sugars:</span> {round1(t.sugars)}</div>
-      <div><span>Fat:</span> {round1(t.fat)}</div>
-      <div><span>Fiber:</span> {round1(t.fiber)}</div>
+      <div><span>Калории:</span> {round1(t.calories)}</div>
+      <div><span>Протеин:</span> {round1(t.protein)}</div>
+      <div><span>Въглехидрати:</span> {round1(t.carbs)}</div>
+      <div><span>Захари:</span> {round1(t.sugars)}</div>
+      <div><span>Мазнини:</span> {round1(t.fat)}</div>
+      <div><span>Фибри:</span> {round1(t.fiber)}</div>
     </div>
   );
 }
@@ -60,14 +60,14 @@ function MealTable({ title, rows, onDelete }) {
       <table className={styles.table}>
         <thead>
           <tr>
-            <th className={styles.th}>Food</th>
-            <th className={styles.th}>Grams</th>
-            <th className={styles.th}>Calories</th>
-            <th className={styles.th}>Protein</th>
-            <th className={styles.th}>Carbohydrates</th>
-            <th className={styles.th}>Sugars</th>
-            <th className={styles.th}>Fat</th>
-            <th className={styles.th}>Fiber</th>
+            <th className={styles.th}>Храна</th>
+            <th className={styles.th}>Грамаж</th>
+            <th className={styles.th}>Калории</th>
+            <th className={styles.th}>Протеин</th>
+            <th className={styles.th}>Въглехидрати</th>
+            <th className={styles.th}>Захари</th>
+            <th className={styles.th}>Мазнини</th>
+            <th className={styles.th}>Фибри</th>
             <th className={styles.th}></th>
           </tr>
         </thead>
@@ -90,7 +90,12 @@ function MealTable({ title, rows, onDelete }) {
                 <td className={styles.td}>{round1(r.fat)}</td>
                 <td className={styles.td}>{round1(r.fiber)}</td>
                 <td className={styles.td}>
-                  <button className={styles.deleteBtn} onClick={() => onDelete(row.id)}>
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={() => onDelete(row.id)}
+                    aria-label="Изтрий"
+                    title="Изтрий"
+                  >
                     ✕
                   </button>
                 </td>
@@ -101,7 +106,7 @@ function MealTable({ title, rows, onDelete }) {
           {(rows || []).length === 0 ? (
             <tr className={styles.tr}>
               <td className={styles.td} colSpan={9} style={{ opacity: 0.7 }}>
-                No entries yet.
+                Все още няма добавени записи.
               </td>
             </tr>
           ) : null}
@@ -120,7 +125,7 @@ export default function FoodDiaryPage({ currentUser }) {
   const [query, setQuery] = useState("");
   const [selectedFoodId, setSelectedFoodId] = useState("");
   const [grams, setGrams] = useState(100);
-  const [meal, setMeal] = useState("Breakfast");
+  const [meal, setMeal] = useState("Закуска");
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -149,7 +154,7 @@ export default function FoodDiaryPage({ currentUser }) {
         }
       } catch (e) {
         if (cancelled) return;
-        setErr(e?.message || "Failed to load foods.");
+        setErr(e?.message || "Неуспешно зареждане на храните.");
         setFoods([]);
       }
     })();
@@ -166,9 +171,8 @@ export default function FoodDiaryPage({ currentUser }) {
     (async () => {
       const userId = currentUser?.id;
       if (!userId) {
-        // no setState sync here; do it async
         await Promise.resolve();
-        if (!cancelled) setErr("Not logged in.");
+        if (!cancelled) setErr("Не сте влезли в профила си.");
         return;
       }
 
@@ -198,7 +202,7 @@ export default function FoodDiaryPage({ currentUser }) {
         }
       } catch (e) {
         if (cancelled) return;
-        setErr(e?.message || "Failed to load logs.");
+        setErr(e?.message || "Неуспешно зареждане на записите.");
         setLogs([]);
       } finally {
         if (!cancelled) setLoading(false);
@@ -238,14 +242,34 @@ export default function FoodDiaryPage({ currentUser }) {
     return calcFrom100g(selectedFood, grams);
   }, [selectedFood, grams]);
 
+  // ⚠️ Важно: meal стойностите в DB са на английски (Breakfast/Lunch/Dinner/Snack)
+  // Оставяме payload-а към DB на английски, но UI-то е на български.
+  const uiMealToDb = useMemo(() => {
+    return {
+      "Закуска": "Breakfast",
+      "Обяд": "Lunch",
+      "Вечеря": "Dinner",
+      "Снак": "Snack",
+    };
+  }, []);
+
+  const dbMealToUi = useMemo(() => {
+    return {
+      Breakfast: "Закуска",
+      Lunch: "Обяд",
+      Dinner: "Вечеря",
+      Snack: "Снак",
+    };
+  }, []);
+
   const logsByMeal = useMemo(() => {
-    const map = { Breakfast: [], Lunch: [], Dinner: [], Snack: [] };
+    const map = { Закуска: [], Обяд: [], Вечеря: [], Снак: [] };
     for (const row of logs) {
-      const k = row.meal || "Snack";
-      (map[k] ?? (map[k] = [])).push(row);
+      const uiKey = dbMealToUi[row.meal || "Snack"] || "Снак";
+      (map[uiKey] ?? (map[uiKey] = [])).push(row);
     }
     return map;
-  }, [logs]);
+  }, [logs, dbMealToUi]);
 
   const totalsAll = useMemo(() => {
     return logs.reduce(
@@ -267,20 +291,22 @@ export default function FoodDiaryPage({ currentUser }) {
     setErr("");
 
     const userId = currentUser?.id;
-    if (!userId) return setErr("Not logged in.");
+    if (!userId) return setErr("Не сте влезли в профила си.");
 
     const foodId = effectiveSelectedFoodId;
-    if (!foodId) return setErr("Choose a food.");
+    if (!foodId) return setErr("Моля, избери храна.");
 
     const g = Number(grams);
-    if (!g || g <= 0) return setErr("Enter grams > 0.");
+    if (!g || g <= 0) return setErr("Въведи грамаж по-голям от 0.");
+
+    const dbMeal = uiMealToDb[meal] || "Breakfast";
 
     const { error } = await supabase.from("FoodLogs").insert({
       user_auth_id: userId,
       date,
       food_id: foodId,
       grams: g,
-      meal: meal || "Breakfast",
+      meal: dbMeal,
       note: null,
     });
 
@@ -304,7 +330,7 @@ export default function FoodDiaryPage({ currentUser }) {
 
     gramsRef.current?.focus?.();
     gramsRef.current?.select?.();
-  }, [currentUser?.id, effectiveSelectedFoodId, grams, date, meal]);
+  }, [currentUser?.id, effectiveSelectedFoodId, grams, date, meal, uiMealToDb]);
 
   const deleteLog = useCallback(async (id) => {
     setErr("");
@@ -319,11 +345,11 @@ export default function FoodDiaryPage({ currentUser }) {
 
   return (
     <div className={styles.page}>
-      <h2 className={styles.title}>Food Diary</h2>
+      <h2 className={styles.title}>Хранителен дневник</h2>
 
       <div className={styles.controls}>
         <label className={styles.dateLabel}>
-          Date
+          Дата
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
       </div>
@@ -340,7 +366,7 @@ export default function FoodDiaryPage({ currentUser }) {
 
         <input
           className={styles.select}
-          placeholder="Search food… (banana, rice, chicken)"
+          placeholder="Търси храна… (банан, ориз, пиле)"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -369,10 +395,11 @@ export default function FoodDiaryPage({ currentUser }) {
           value={grams}
           onChange={(e) => setGrams(e.target.value)}
           onKeyDown={onGramsKeyDown}
+          aria-label="Грамаж"
         />
 
         <button className={styles.addBtn} onClick={addLog}>
-          Add
+          Добави
         </button>
       </div>
 
@@ -381,7 +408,7 @@ export default function FoodDiaryPage({ currentUser }) {
         <div className={styles.tableWrap} style={{ marginBottom: "1rem" }}>
           <div className={styles.tableHeader}>
             <div className={styles.tableTitle}>
-              Preview: {selectedFood.name} ({grams}g)
+              Преглед: {selectedFood.name} ({grams} г)
             </div>
             <NutritionMini t={preview} />
           </div>
@@ -389,21 +416,21 @@ export default function FoodDiaryPage({ currentUser }) {
       )}
 
       {err && <p className={styles.error}>{err}</p>}
-      {loading && <p className={styles.loading}>Loading…</p>}
+      {loading && <p className={styles.loading}>Зареждане…</p>}
 
       {/* DAILY TOTAL */}
       <div className={styles.tableWrap} style={{ marginTop: "1rem" }}>
         <div className={styles.tableHeader}>
-          <div className={styles.tableTitle}>Daily Total</div>
+          <div className={styles.tableTitle}>Дневен сбор</div>
           <NutritionMini t={totalsAll} />
         </div>
       </div>
 
       {/* MEAL SECTIONS */}
-      <MealTable title="Breakfast" rows={logsByMeal.Breakfast} onDelete={deleteLog} />
-      <MealTable title="Lunch" rows={logsByMeal.Lunch} onDelete={deleteLog} />
-      <MealTable title="Dinner" rows={logsByMeal.Dinner} onDelete={deleteLog} />
-      <MealTable title="Snack" rows={logsByMeal.Snack} onDelete={deleteLog} />
+      <MealTable title="Закуска" rows={logsByMeal["Закуска"]} onDelete={deleteLog} />
+      <MealTable title="Обяд" rows={logsByMeal["Обяд"]} onDelete={deleteLog} />
+      <MealTable title="Вечеря" rows={logsByMeal["Вечеря"]} onDelete={deleteLog} />
+      <MealTable title="Снак" rows={logsByMeal["Снак"]} onDelete={deleteLog} />
     </div>
   );
 }

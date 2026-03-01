@@ -1,94 +1,143 @@
-.title {
-  margin-bottom: 1.25rem;
-  color: #000000;
+/* ExercisesPage.module.css — TRAINIFY DARK (NO WHITE) */
+
+.page {
+  min-height: 100vh;
+  width: 100%;
+  background: #000;
+  color: #fff;
+  overflow-x: hidden;
 }
 
-/* Filters */
+/* IMPORTANT: even if you render ONLY .wrapper, it will still be black */
+.wrapper {
+  width: 100%;
+  min-height: 100vh;     /* ✅ cover the whole visible area */
+  background: #000;      /* ✅ kills the white even without .page */
+  color: #fff;
+
+  padding: 28px 24px 40px;
+  overflow-x: hidden;
+}
+
+/* inner container to keep content centered */
+.inner {
+  max-width: 1150px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+/* title */
+.title {
+  font-size: 26px;
+  font-weight: 900;
+  margin-bottom: 18px;
+  color: #fff;
+}
+
+/* filters row */
 .filterSection {
   display: flex;
-  gap: 0.6rem;
-  margin-bottom: 1rem;
+  gap: 12px;
+  margin-bottom: 22px;
   flex-wrap: wrap;
-  align-items: center;
+  width: 100%;
+  max-width: 100%;
 }
 
-.filterInput {
+/* inputs */
+.filterSection input,
+.filterSection select {
   flex: 1;
-  min-width: 220px;
+  min-width: 200px;
+  max-width: 100%;
+
+  background: #0b0b0b;
+  color: #fff;
+
+  border: 1px solid #1f1f1f;
+  border-radius: 12px;
+
+  padding: 12px 16px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition: all 0.15s ease;
 }
 
-.limitNote {
-  margin: 0.5rem 0 1rem;
-  color: #6e8387;
-  font-size: 0.9rem;
+.filterSection input::placeholder {
+  color: rgba(255,255,255,0.4);
 }
 
-/* ✅ 2-column layout */
+.filterSection input:focus,
+.filterSection select:focus {
+  outline: none;
+  border-color: #e11d2e;
+  box-shadow: 0 0 0 3px rgba(225,29,46,0.18);
+}
+
+/* grid */
 .exerciseList {
   list-style: none;
   padding: 0;
   margin: 0;
 
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  width: 100%;
+  max-width: 100%;
 }
 
-/* Card */
+/* card */
 .exerciseItem {
-  padding: 1rem;
-  background: #ffffff;
-  border: 1px solid #e8e8e8;
-  border-left: 4px solid #e11d2e; /* ✅ Trainify red */
-  border-radius: 12px;
+  background: #0f0f0f;
+  border: 1px solid #1f1f1f;
+  border-left: 4px solid #e11d2e;
+  border-radius: 14px;
+  padding: 16px;
 
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-  cursor: pointer;
+  transition: all 0.18s ease;
+  overflow: hidden;
 }
 
 .exerciseItem:hover {
+  background: #141414;
+  border-color: #2a2a2a;
   transform: translateY(-2px);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
-  border-color: rgba(225, 29, 46, 0.25);
 }
 
-/* top row */
+/* card header */
 .exerciseTop {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  margin-bottom: 8px;
 }
 
-.openHint {
-  font-size: 12px;
-  color: #6e8387;
-  font-weight: 600;
-  white-space: nowrap;
+/* name */
+.exerciseName {
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* muscle */
+.exerciseMuscle {
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
   margin-top: 2px;
 }
 
-/* text */
-.exerciseName {
-  font-weight: 750;
-  color: #000000;
-  margin-bottom: 0.25rem;
-  font-size: 1.05rem;
-}
-
-.exerciseMuscle {
-  color: #6e8387;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
+/* description */
 .exerciseDescription {
-  margin-top: 0.7rem;
-  color: #2b2b2b;
-  font-size: 0.95rem;
+  margin-top: 10px;
+  font-size: 14px;
   line-height: 1.45;
+  color: rgba(255,255,255,0.82);
 
-  /* keep cards even height */
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -98,22 +147,76 @@
 /* image */
 .exerciseImg {
   width: 100%;
-  height: 170px;
+  height: 180px;
+  margin-top: 12px;
+  border-radius: 12px;
   object-fit: cover;
-  border-radius: 10px;
-  margin-top: 10px;
-  border: 1px solid #eee;
+  border: 1px solid #1f1f1f;
 }
 
+/* hint */
+.openHint {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+}
+
+/* empty */
 .emptyState {
   text-align: center;
-  padding: 2rem;
-  color: #6e8387;
+  padding: 50px;
+  color: rgba(255,255,255,0.5);
 }
 
-/* responsive -> 1 column */
-@media (max-width: 820px) {
+/* apply filter button */
+.applyButton {
+  background: #e11d2e;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.applyButton:hover {
+  background: #fff;
+  color: #e11d2e;
+  box-shadow: 0 6px 16px rgba(225, 29, 46, 0.3);
+}
+
+.applyButton:active {
+  opacity: 0.9;
+}
+
+.applyButton:disabled {
+  background: #555;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* responsive */
+@media (max-width: 900px) {
   .exerciseList {
     grid-template-columns: 1fr;
+  }
+
+  .wrapper {
+    padding: 20px;
+  }
+
+  .filterSection {
+    flex-direction: column;
+  }
+
+  .filterSection input,
+  .filterSection select,
+  .filterSection button {
+    min-width: 100%;
+    width: 100%;
   }
 }

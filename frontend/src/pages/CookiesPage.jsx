@@ -4,61 +4,63 @@ export default function CookiesPage({ setPage }) {
   return (
     <div className="lp-wrap">
       <div className="lp-card">
-        <h1 className="lp-title">Cookie Policy</h1>
+        <h1 className="lp-title">Политика за бисквитки</h1>
 
         <p className="lp-text">
-          This Cookie Policy explains how Trainify uses cookies/local storage. Cookies help keep you signed in and
-          allow the app to work smoothly. We keep this minimal.
+          Настоящата политика обяснява как Trainify използва бисквитки и/или local storage. Те помагат да останеш
+          вписан/а и приложението да работи стабилно. Използваме ги в минимално необходимия обем.
         </p>
 
         <div className="lp-section">
-          <h2 className="lp-h2">What are cookies?</h2>
+          <h2 className="lp-h2">Какво са бисквитките?</h2>
           <p className="lp-text">
-            Cookies are small files stored in your browser. Some services also use local storage for similar purposes.
-            Trainify uses these primarily for authentication and basic app operation.
+            Бисквитките са малки файлове, които се съхраняват в браузъра. Някои услуги използват и local storage за
+            сходни цели. Trainify ги използва основно за удостоверяване и базова работа на приложението.
           </p>
         </div>
 
         <div className="lp-section">
-          <h2 className="lp-h2">Types of cookies used</h2>
+          <h2 className="lp-h2">Видове бисквитки, които използваме</h2>
           <ul className="lp-list">
-            <li><b>Essential:</b> required to log in and keep your session active (Supabase Auth).</li>
-            <li><b>Preferences (optional):</b> UI preferences like selected page/theme (if implemented).</li>
-            <li><b>Analytics (optional):</b> only if you add analytics later (not required for diploma scope).</li>
+            <li><b>Необходими:</b> нужни за вход и поддържане на активна сесия (Supabase Auth).</li>
+            <li><b>Предпочитания (по избор):</b> настройки на интерфейса (напр. страница/тема), ако са внедрени.</li>
+            <li><b>Аналитични (по избор):</b> само ако бъде добавена статистика в бъдеще (не е задължително за дипломната разработка).</li>
           </ul>
         </div>
 
         <div className="lp-section">
-          <h2 className="lp-h2">How Trainify uses them</h2>
+          <h2 className="lp-h2">Как ги използва Trainify</h2>
           <ul className="lp-list">
-            <li>Maintain secure login sessions</li>
-            <li>Remember basic preferences (if enabled)</li>
-            <li>Improve reliability by preventing repeated logins</li>
+            <li>Поддържане на сигурни сесии за вход</li>
+            <li>Запомняне на основни предпочитания (ако е активирано)</li>
+            <li>Подобряване на надеждността (напр. предотвратяване на повторни влизания)</li>
           </ul>
         </div>
 
         <div className="lp-section">
-          <h2 className="lp-h2">Managing cookies</h2>
+          <h2 className="lp-h2">Управление на бисквитките</h2>
           <p className="lp-text">
-            You can control cookies via your browser settings. Blocking essential cookies may prevent Trainify from working properly.
+            Можеш да управляваш бисквитките от настройките на браузъра си. Блокирането на „необходимите“ бисквитки може
+            да попречи на Trainify да работи коректно.
           </p>
           <ul className="lp-list">
-            <li>Clear cookies to sign out on shared devices</li>
-            <li>Disable third-party cookies (Trainify mainly uses first-party)</li>
-            <li>Use incognito mode if you do not want data stored locally</li>
+            <li>Изчисти бисквитките, ако използваш споделено устройство</li>
+            <li>Изключи third-party cookies (Trainify използва основно first-party)</li>
+            <li>Ползвай инкогнито режим, ако не искаш данни да се пазят локално</li>
           </ul>
         </div>
 
         <div className="lp-section">
-          <h2 className="lp-h2">Future improvements</h2>
+          <h2 className="lp-h2">Бъдещи подобрения</h2>
           <p className="lp-text">
-            In a production version, Trainify could include a cookie preference banner and allow users to opt in/out of analytics.
+            В продукционна версия Trainify може да включва банер за избор на предпочитания за бисквитки и възможност за
+            включване/изключване на аналитични инструменти.
           </p>
         </div>
 
         <div className="lp-actions">
           <button className="lp-btn" onClick={() => setPage?.("home")}>
-            Back to Home
+            Обратно към Начало
           </button>
         </div>
       </div>

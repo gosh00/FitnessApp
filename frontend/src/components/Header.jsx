@@ -20,7 +20,7 @@ const Header = ({ setPage, onLogout }) => {
   const [avatarVersion, setAvatarVersion] = useState(() => Date.now());
 
   const [userStats, setUserStats] = useState({
-    displayName: "User",
+    displayName: "Потребител",
     avatarUrl: null, // raw base URL (no cache bust here)
     streak: 0,
     level: 1,
@@ -47,7 +47,7 @@ const Header = ({ setPage, onLogout }) => {
       try {
         const { data: authRes, error: authErr } = await supabase.auth.getUser();
         if (authErr) throw authErr;
-        if (!authRes?.user) throw new Error("No logged-in user.");
+        if (!authRes?.user) throw new Error("Няма активен потребител.");
 
         const authUser = authRes.user;
 
@@ -58,10 +58,10 @@ const Header = ({ setPage, onLogout }) => {
           .maybeSingle();
 
         if (uErr) throw uErr;
-        if (!userRow) throw new Error("No Users row found.");
+        if (!userRow) throw new Error("Липсва профил в таблица Users.");
 
         const appUserId = userRow.id;
-        const displayName = userRow.display_name || authUser.email || "User";
+        const displayName = userRow.display_name || authUser.email || "Потребител";
 
         // ✅ Resolve avatar from DB (avatar_url)
         let avatarUrl = null;
@@ -111,7 +111,7 @@ const Header = ({ setPage, onLogout }) => {
         });
       } catch (e) {
         if (!isMounted) return;
-        setPageError(e?.message || "Failed to load header stats.");
+        setPageError(e?.message || "Неуспешно зареждане на данните в заглавната лента.");
       } finally {
         if (isMounted && !silent) setLoading(false);
         if (isMounted && silent) setLoading(false); // ensure first load ends
@@ -165,7 +165,7 @@ const Header = ({ setPage, onLogout }) => {
             <img
               key={avatarSrc} // ✅ forces re-render if url changes
               src={avatarSrc}
-              alt="avatar"
+              alt="аватар"
               className="profile-avatar"
               onError={(e) => {
                 e.currentTarget.src = DEFAULT_AVATAR;
@@ -178,14 +178,14 @@ const Header = ({ setPage, onLogout }) => {
 
           {isProfileOpen && (
             <div className="profile-dropdown">
-              <button onClick={goToProfile}>👤 Profile</button>
+              <button onClick={goToProfile}>👤 Профил</button>
               <div style={{ height: 1, background: "rgba(0,0,0,0.06)" }} />
-              <button onClick={handleLogout}>🚪 Logout</button>
+              <button onClick={handleLogout}>🚪 Изход</button>
             </div>
           )}
 
           <div className="user-level compact">
-            <span className="level-label">Level {userStats.level}</span>
+            <span className="level-label">Ниво {userStats.level}</span>
             <div className="level-progress">
               <div className="level-fill" style={{ width: `${userStats.levelProgressPct}%` }} />
             </div>
@@ -195,9 +195,9 @@ const Header = ({ setPage, onLogout }) => {
         {/* CENTER */}
         <div className="header-center">
           <TrainifyLogo as="div" className="header-logo-text" />
-          <div className="header-logo-tagline">Fitness Tracking</div>
+          <div className="header-logo-tagline">Проследяване на фитнес прогрес</div>
 
-          {loading && <p>Loading…</p>}
+          {loading && <p>Зареждане…</p>}
           {pageError && <p style={{ color: "salmon" }}>{pageError}</p>}
         </div>
 
@@ -205,7 +205,7 @@ const Header = ({ setPage, onLogout }) => {
         <div className="header-right header-right-streak">
           <div className={`streak-badge ${userStats.streak > 0 ? "active" : ""}`}>
             <span className="streak-icon">🔥</span>
-            <span className="streak-count">{userStats.streak} days</span>
+            <span className="streak-count">{userStats.streak} дни</span>
           </div>
         </div>
       </div>

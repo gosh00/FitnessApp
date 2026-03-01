@@ -50,13 +50,13 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         if (authErr) throw authErr;
 
         const authUser = authRes?.user ?? currentUser ?? null;
-        if (!authUser) throw new Error("No logged-in user.");
+        if (!authUser) throw new Error("Няма влязъл потребител.");
 
         const _authId = authUser.id;
         const email = authUser.email;
 
-        if (!_authId) throw new Error("Auth user missing id.");
-        if (!email) throw new Error("Auth user has no email.");
+        if (!_authId) throw new Error("Липсва потребителско id (auth).");
+        if (!email) throw new Error("Потребителят няма имейл.");
 
         if (!isMounted) return;
         setAuthId(_authId);
@@ -64,7 +64,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         // ✅ Ensure Users row exists via backend (service role)
         const res = await api.post("/profile/ensure", { auth_id: _authId, email });
         const row = res.data;
-        if (!row?.id) throw new Error("Profile ensure did not return a user row.");
+        if (!row?.id) throw new Error("Неуспешно зареждане на профил (липсва user row).");
 
         if (!isMounted) return;
 
@@ -79,7 +79,8 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
 
         setAvatarUrl(resolveAvatar(row.avatar_url));
       } catch (err) {
-        const msg = err?.response?.data?.error || err?.message || "Failed to load profile.";
+        const msg =
+          err?.response?.data?.error || err?.message || "Неуспешно зареждане на профила.";
         if (isMounted) setPageError(msg);
       } finally {
         if (isMounted) setLoading(false);
@@ -123,19 +124,19 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     const heightNum = height === "" ? null : Number(height);
 
     if (ageNum !== null && (!Number.isFinite(ageNum) || ageNum < 0 || ageNum > 120)) {
-      setPageError("Age must be between 0 and 120.");
+      setPageError("Възрастта трябва да е между 0 и 120.");
       return;
     }
     if (heightNum !== null && (!Number.isFinite(heightNum) || heightNum < 50 || heightNum > 250)) {
-      setPageError("Height must be between 50 and 250 cm.");
+      setPageError("Ръстът трябва да е между 50 и 250 см.");
       return;
     }
     if (weightNum !== null && (!Number.isFinite(weightNum) || weightNum < 20 || weightNum > 400)) {
-      setPageError("Weight must be between 20 and 400 kg.");
+      setPageError("Теглото трябва да е между 20 и 400 кг.");
       return;
     }
     if (!GOAL_OPTIONS.includes(goal)) {
-      setPageError("Invalid goal selected.");
+      setPageError("Невалидна цел.");
       return;
     }
 
@@ -151,7 +152,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       });
 
       const updated = res.data;
-      if (!updated?.id) throw new Error("Profile update did not return a row.");
+      if (!updated?.id) throw new Error("Неуспешно записване на профила.");
 
       setUserRow(updated);
 
@@ -171,9 +172,10 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
 
       onUpdateProfile?.(currentUser);
 
-      alert("Profile updated!");
+      alert("Профилът е обновен!");
     } catch (err) {
-      const msg = err?.response?.data?.error || err?.message || "Failed to save profile.";
+      const msg =
+        err?.response?.data?.error || err?.message || "Неуспешно записване на профила.";
       setPageError(msg);
     }
   };
@@ -183,25 +185,25 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     if (!file) return;
 
     if (!editing) {
-      alert("Click Edit Profile first.");
+      alert("Първо натисни „Редактирай профил“.");
       e.target.value = "";
       return;
     }
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file.");
+      alert("Моля, избери изображение.");
       e.target.value = "";
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Max file size is 5MB.");
+      alert("Максимален размер: 5MB.");
       e.target.value = "";
       return;
     }
 
     if (!userRow?.id || !authId) {
-      setPageError("Missing user id/auth id.");
+      setPageError("Липсва user id / auth id.");
       e.target.value = "";
       return;
     }
@@ -220,7 +222,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       });
 
       const newUrl = res.data?.avatar_url;
-      if (!newUrl) throw new Error("Backend did not return avatar_url.");
+      if (!newUrl) throw new Error("Сървърът не върна avatar_url.");
 
       // ✅ show immediately
       setAvatarUrl(bust(newUrl));
@@ -231,7 +233,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       // ✅ refresh header instantly
       window.dispatchEvent(new Event("profile_saved"));
     } catch (err) {
-      const msg = err?.response?.data?.error || err?.message || "Upload failed";
+      const msg = err?.response?.data?.error || err?.message || "Неуспешно качване.";
       setPageError(msg);
     } finally {
       setUploadingAvatar(false);
@@ -239,16 +241,23 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     }
   };
 
+  const goalLabel = (opt) => {
+    if (opt === "Maintain Weight") return "Поддържане";
+    if (opt === "Weight loss") return "Отслабване";
+    if (opt === "Gain Weight") return "Качване";
+    return opt;
+  };
+
   if (loading) {
     return (
       <div className={sharedStyles.card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 className={styles.title}>Your Profile</h2>
+          <h2 className={styles.title}>Моят профил</h2>
           <button className={sharedStyles.secondaryButton} onClick={() => setPage?.("home")}>
-            Back
+            Назад
           </button>
         </div>
-        <p>Loading…</p>
+        <p>Зареждане…</p>
       </div>
     );
   }
@@ -257,9 +266,9 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     return (
       <div className={sharedStyles.card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 className={styles.title}>Your Profile</h2>
+          <h2 className={styles.title}>Моят профил</h2>
           <button className={sharedStyles.secondaryButton} onClick={() => setPage?.("home")}>
-            Back
+            Назад
           </button>
         </div>
         <p style={{ color: "red" }}>{pageError}</p>
@@ -270,9 +279,9 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
   return (
     <div className={sharedStyles.card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 className={styles.title}>Your Profile</h2>
+        <h2 className={styles.title}>Моят профил</h2>
         <button className={sharedStyles.secondaryButton} onClick={() => setPage?.("home")}>
-          Back
+          Назад
         </button>
       </div>
 
@@ -303,7 +312,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
             opacity: editing && !uploadingAvatar ? 1 : 0.6,
           }}
         >
-          {uploadingAvatar ? "Uploading..." : "Change photo"}
+          {uploadingAvatar ? "Качване…" : "Смени снимка"}
           <input
             type="file"
             accept="image/*"
@@ -316,7 +325,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
 
       <div className={styles.profileGrid}>
         <div className={sharedStyles.formGroup}>
-          <label className={sharedStyles.formLabel}>Display Name</label>
+          <label className={sharedStyles.formLabel}>Показвано име</label>
           <input
             type="text"
             value={displayName}
@@ -328,12 +337,12 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         </div>
 
         <div className={sharedStyles.formGroup}>
-          <label className={sharedStyles.formLabel}>Email</label>
+          <label className={sharedStyles.formLabel}>Имейл</label>
           <input type="email" value={userRow?.email ?? ""} disabled className={sharedStyles.input} />
         </div>
 
         <div className={sharedStyles.formGroup}>
-          <label className={sharedStyles.formLabel}>Goal</label>
+          <label className={sharedStyles.formLabel}>Цел</label>
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
@@ -343,27 +352,27 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
           >
             {GOAL_OPTIONS.map((opt) => (
               <option key={opt} value={opt}>
-                {opt}
+                {goalLabel(opt)}
               </option>
             ))}
           </select>
         </div>
 
         <div className={sharedStyles.formGroup}>
-          <label className={sharedStyles.formLabel}>Bio</label>
+          <label className={sharedStyles.formLabel}>Описание (Bio)</label>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             disabled={!editing}
             className={sharedStyles.textarea}
             style={{ backgroundColor: editing ? "#FFFFFC" : "#f5f5f5" }}
-            placeholder="Tell us about your fitness journey..."
+            placeholder="Разкажи накратко за целите и пътя си във фитнеса…"
           />
         </div>
 
         <div className={styles.statsGrid}>
           <div className={sharedStyles.formGroup}>
-            <label className={sharedStyles.formLabel}>Age</label>
+            <label className={sharedStyles.formLabel}>Възраст</label>
             <input
               type="number"
               value={age}
@@ -375,7 +384,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
           </div>
 
           <div className={sharedStyles.formGroup}>
-            <label className={sharedStyles.formLabel}>Weight (kg)</label>
+            <label className={sharedStyles.formLabel}>Тегло (кг)</label>
             <input
               type="number"
               value={weight}
@@ -388,7 +397,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
           </div>
 
           <div className={sharedStyles.formGroup}>
-            <label className={sharedStyles.formLabel}>Height (cm)</label>
+            <label className={sharedStyles.formLabel}>Ръст (см)</label>
             <input
               type="number"
               value={height}
@@ -403,15 +412,15 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         <div className={styles.buttonGroup}>
           {!editing ? (
             <button onClick={handleEdit} className={sharedStyles.primaryButton}>
-              Edit Profile
+              Редактирай профил
             </button>
           ) : (
             <>
               <button onClick={handleSave} className={sharedStyles.primaryButton}>
-                Save Changes
+                Запази промените
               </button>
               <button onClick={handleCancel} className={sharedStyles.secondaryButton}>
-                Cancel
+                Отказ
               </button>
             </>
           )}

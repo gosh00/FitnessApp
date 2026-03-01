@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 import styles from "./ExercisesPage.module.css";
-import sharedStyles from "../styles/shared.module.css";
 
 // ---- helpers for YouTube ----
 function isYouTube(url = "") {
@@ -28,6 +27,7 @@ export default function ExercisesPage() {
 
   const [selected, setSelected] = useState(null);
 
+  // load exercises
   const loadExercises = useCallback(async () => {
     setLoading(true);
     setPageError("");
@@ -47,12 +47,13 @@ export default function ExercisesPage() {
       }
 
       const { data, error } = await query;
+
       if (error) throw error;
 
       setExercises(data ?? []);
     } catch (err) {
       console.error(err);
-      setPageError(err?.message || "Error loading exercises");
+      setPageError(err?.message || "Грешка при зареждане на упражненията.");
       setExercises([]);
     } finally {
       setLoading(false);
@@ -68,201 +69,144 @@ export default function ExercisesPage() {
   }, [exercises]);
 
   return (
-    <div className={sharedStyles.card}>
-      <h2 className={styles.title}>Exercises Library</h2>
+    <div className={styles.page}>
+      <div className={styles.wrapper}>
+        <div className={styles.inner}>
+          <h2 className={styles.title}>Библиотека с упражнения</h2>
 
-      {/* Filters */}
-      <div className={styles.filterSection}>
-        <input
-          placeholder="Filter by name (e.g. bench, squat)"
-          value={nameFilter}
-          onChange={(e) => setNameFilter(e.target.value)}
-          className={`${sharedStyles.input} ${styles.filterInput}`}
-        />
+          {/* Filters */}
+          <div className={styles.filterSection}>
+            <input
+              placeholder="Филтър по име (напр. лежанка, клек)"
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+              className={styles.filterInput}
+            />
 
-        <input
-          placeholder="Filter by muscle (e.g. chest, legs)"
-          value={muscleFilter}
-          onChange={(e) => setMuscleFilter(e.target.value)}
-          className={`${sharedStyles.input} ${styles.filterInput}`}
-        />
+            <input
+              placeholder="Филтър по мускул (напр. гърди, крака)"
+              value={muscleFilter}
+              onChange={(e) => setMuscleFilter(e.target.value)}
+              className={styles.filterInput}
+            />
 
-        <button
-          type="button"
-          onClick={loadExercises}
-          className={sharedStyles.primaryButton}
-          disabled={loading}
-        >
-          Apply filter
-        </button>
+            <button
+              type="button"
+              onClick={loadExercises}
+              className={styles.applyButton}
+              disabled={loading}
+            >
+              Приложи филтъра
+            </button>
+          </div>
+
+          {pageError && <div className={styles.error}>{pageError}</div>}
+
+          {loading && <div className={styles.loading}>Зареждане на упражнения…</div>}
+
+          {!loading && exercises.length === 0 && (
+            <div className={styles.emptyState}>Няма намерени упражнения.</div>
+          )}
+
+          {/* Exercises list */}
+          <ul className={styles.exerciseList}>
+            {visibleExercises.map((ex) => (
+              <li
+                key={ex.id}
+                className={styles.exerciseItem}
+                onClick={() => setSelected(ex)}
+              >
+                <div className={styles.exerciseTop}>
+                  <div>
+                    <div className={styles.exerciseName}>{ex.name}</div>
+                    <div className={styles.exerciseMuscle}>{ex.muscle_group}</div>
+                  </div>
+
+                  <div className={styles.openHint}>Детайли ▸</div>
+                </div>
+
+                {ex.image_url && (
+                  <img
+                    src={ex.image_url}
+                    alt={ex.name}
+                    className={styles.exerciseImg}
+                  />
+                )}
+
+                {ex.description && (
+                  <div className={styles.exerciseDescription}>{ex.description}</div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
-      {pageError && <div style={{ color: "red", marginTop: 8 }}>{pageError}</div>}
-      {loading && <div className={sharedStyles.loading}>Loading exercises...</div>}
-
-      {!loading && exercises.length === 0 && (
-        <div className={styles.emptyState}>No exercises found.</div>
-      )}
-
-      {!loading && exercises.length > MAX_VISIBLE && (
-        <div className={styles.limitNote}>
-          Showing {MAX_VISIBLE} of {exercises.length}. Use filters to narrow results.
-        </div>
-      )}
-
-      {/* ✅ 2-column list + max 12 */}
-      <ul className={styles.exerciseList}>
-        {visibleExercises.map((ex) => (
-          <li
-            key={ex.id}
-            className={styles.exerciseItem}
-            onClick={() => setSelected(ex)}
-            title="Click for details"
-          >
-            <div className={styles.exerciseTop}>
-              <div>
-                <div className={styles.exerciseName}>{ex.name}</div>
-                <div className={styles.exerciseMuscle}>{ex.muscle_group}</div>
-              </div>
-
-              <div className={styles.openHint}>Details ▸</div>
-            </div>
-
-            {ex.image_url && (
-              <img src={ex.image_url} alt={ex.name} className={styles.exerciseImg} />
-            )}
-
-            {ex.description && (
-              <div className={styles.exerciseDescription}>{ex.description}</div>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      {/* MODAL */}
+      {/* MODAL DARK VERSION */}
       {selected && (
-        <div
-          onClick={() => setSelected(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.55)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-            zIndex: 9999,
-          }}
-        >
+        <div onClick={() => setSelected(null)} className={styles.modalOverlay}>
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              width: "min(900px, 100%)",
-              maxHeight: "85vh",
-              overflow: "auto",
-              background: "#fff",
-              borderRadius: 16,
-              padding: 16,
-              boxShadow: "0 12px 30px rgba(0,0,0,0.25)",
-            }}
+            className={styles.modalCard}
           >
             {/* header */}
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+            <div className={styles.modalHeader}>
               <div>
-                <h2 style={{ margin: 0 }}>{selected.name}</h2>
-                <div style={{ opacity: 0.75, marginTop: 6 }}>
+                <h2 className={styles.modalTitle}>{selected.name}</h2>
+                <div className={styles.modalMuscle}>
                   {selected.muscle_group || "—"}
                 </div>
               </div>
 
               <button
-                type="button"
                 onClick={() => setSelected(null)}
-                style={{
-                  border: "1px solid #ddd",
-                  borderRadius: 10,
-                  background: "white",
-                  padding: "8px 10px",
-                  cursor: "pointer",
-                  height: 38,
-                }}
+                className={styles.modalClose}
+                aria-label="Затвори"
               >
                 ✕
               </button>
             </div>
 
             {/* content */}
-            <div
-              style={{
-                marginTop: 14,
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 12,
-              }}
-            >
+            <div className={styles.modalContent}>
               {/* image */}
-              <div style={{ border: "1px solid #eee", borderRadius: 14, overflow: "hidden" }}>
+              <div className={styles.modalImageBox}>
                 {selected.image_url ? (
                   <img
                     src={selected.image_url}
                     alt={selected.name}
-                    style={{ width: "100%", height: 320, objectFit: "cover" }}
+                    className={styles.modalImage}
                   />
                 ) : (
-                  <div
-                    style={{
-                      height: 320,
-                      background: "#f5f5f5",
-                      display: "grid",
-                      placeItems: "center",
-                    }}
-                  >
-                    No image
-                  </div>
+                  <div className={styles.modalPlaceholder}>Няма изображение</div>
                 )}
               </div>
 
               {/* video */}
-              <div style={{ border: "1px solid #eee", borderRadius: 14, overflow: "hidden" }}>
+              <div className={styles.modalVideoBox}>
                 {selected.video_url ? (
                   isYouTube(selected.video_url) ? (
                     <iframe
                       title="exercise-video"
-                      src={toYouTubeEmbed(selected.video_url) || undefined}
-                      style={{ width: "100%", height: 320, border: 0 }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      src={toYouTubeEmbed(selected.video_url)}
+                      className={styles.modalVideo}
                       allowFullScreen
                     />
                   ) : (
-                    <div style={{ padding: 12 }}>
-                      Video link is not YouTube. Paste a YouTube link in <b>video_url</b>.
+                    <div className={styles.modalPlaceholder}>
+                      Невалиден видео линк
                     </div>
                   )
                 ) : (
-                  <div
-                    style={{
-                      height: 320,
-                      background: "#f5f5f5",
-                      display: "grid",
-                      placeItems: "center",
-                      padding: 12,
-                      textAlign: "center",
-                    }}
-                  >
-                    No video yet.
-                    <br />
-                    Add a YouTube link to <b>video_url</b> in Supabase.
-                  </div>
+                  <div className={styles.modalPlaceholder}>Няма видео</div>
                 )}
               </div>
             </div>
 
             {/* description */}
-            <div style={{ marginTop: 14 }}>
-              <h3 style={{ marginBottom: 8 }}>Description</h3>
-              <div style={{ lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                {selected.description || "Няма описание."}
-              </div>
+            <div className={styles.modalDescription}>
+              <h3>Описание</h3>
+              <div>{selected.description || "Няма описание."}</div>
             </div>
           </div>
         </div>

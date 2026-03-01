@@ -17,10 +17,10 @@ export default function Footer({ setPage }) {
 
   const links = useMemo(
     () => [
-      { label: "About", page: "about" },
-      { label: "Privacy Policy", page: "privacy" },
-      { label: "Terms of Service", page: "terms" },
-      { label: "Cookies", page: "cookies" },
+      { label: "За приложението", page: "about" },
+      { label: "Политика за поверителност", page: "privacy" },
+      { label: "Общи условия", page: "terms" },
+      { label: "Бисквитки", page: "cookies" },
     ],
     []
   );
@@ -89,13 +89,13 @@ export default function Footer({ setPage }) {
             </div>
 
             <p className="tf-footer-desc">
-              Trainify helps you log workouts, track nutrition, and see progress clearly — all in one place.
+              Trainify ти помага да записваш тренировките си, да следиш храненето и да виждаш прогреса си ясно — на едно място.
             </p>
           </div>
 
           {/* Links */}
           <div className="tf-footer-links">
-            <h4 className="tf-footer-title">Info</h4>
+            <h4 className="tf-footer-title">Информация</h4>
             <div className="tf-links">
               {links.map((l) => (
                 <button
@@ -112,51 +112,51 @@ export default function Footer({ setPage }) {
 
           {/* Stats */}
           <div className="tf-footer-stats">
-            <h4 className="tf-footer-title">Live Stats</h4>
+            <h4 className="tf-footer-title">Статистика на живо</h4>
 
             <div className="tf-stats-grid" aria-busy={loading ? "true" : "false"}>
               <div className="tf-stat">
                 <div className="tf-stat-number">{stats.users ?? "—"}</div>
-                <div className="tf-stat-label">Users</div>
+                <div className="tf-stat-label">Потребители</div>
               </div>
 
               <div className="tf-stat">
                 <div className="tf-stat-number">{stats.workouts ?? "—"}</div>
-                <div className="tf-stat-label">Workouts</div>
+                <div className="tf-stat-label">Тренировки</div>
               </div>
 
               <div className="tf-stat">
                 <div className="tf-stat-number">{stats.exerciseLogs ?? "—"}</div>
-                <div className="tf-stat-label">Exercise Logs</div>
+                <div className="tf-stat-label">Записи на упражнения</div>
               </div>
 
               <div className="tf-stat">
                 <div className="tf-stat-number">{stats.foodLogs ?? "—"}</div>
-                <div className="tf-stat-label">Food Entries</div>
+                <div className="tf-stat-label">Записи на храна</div>
               </div>
             </div>
 
-            {loading ? <div className="tf-loading">Updating…</div> : null}
+            {loading ? <div className="tf-loading">Обновяване…</div> : null}
           </div>
         </div>
 
         <div className="tf-footer-bottom">
           <div className="tf-copyright">
-            © {currentYear} Trainify. All rights reserved.
+            © {currentYear} Trainify. Всички права запазени.
           </div>
 
-         {/* 
-         <div className="tf-bottom-links">
+          {/*
+          <div className="tf-bottom-links">
             <button type="button" className="tf-mini-link" onClick={() => go("privacy")}>
-              Privacy
+              Поверителност
             </button>
             <span className="tf-dot">•</span>
             <button type="button" className="tf-mini-link" onClick={() => go("terms")}>
-              Terms
+              Условия
             </button>
             <span className="tf-dot">•</span>
             <button type="button" className="tf-mini-link" onClick={() => go("cookies")}>
-              Cookies
+              Бисквитки
             </button>
           </div>
           */}

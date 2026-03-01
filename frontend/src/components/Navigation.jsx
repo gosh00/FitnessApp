@@ -3,12 +3,12 @@ import "./Navigation.css";
 
 const Navigation = ({ page, setPage }) => {
   const pages = [
-    { id: "home", label: "Home" },
-    { id: "exercises", label: "Exercises" },
-    { id: "log", label: "Log Workout" },
-    { id: "workouts", label: "Feed" },
-    { id: "calories", label: "Calories" },
-    { id: "food-diary", label: "Food Diary" },
+    { id: "home", label: "Начало" },
+    { id: "exercises", label: "Упражнения" },
+    { id: "log", label: "Запиши тренировка" },
+    { id: "workouts", label: "Поток" },
+    { id: "calories", label: "Калории" },
+    { id: "food-diary", label: "Хранителен дневник" },
   ];
 
   return (
