@@ -224,6 +224,27 @@
   flex-wrap: wrap;
 }
 
+.setRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap: nowrap;          /* ✅ да не пада на нов ред */
+}
+
+.smallInput{
+  width: 120px !important;    /* ✅ override на width:100% */
+  min-width: 120px;
+}
+
+.smallSelect{
+  width: 92px !important;
+  min-width: 90px;
+}
+
+.setLabel{
+  min-width: 70px;
+  opacity: .9;
+}
 /* Trainify buttons (added classes in JSX) */
 .primaryBtn {
   background: #e11d2e !important;

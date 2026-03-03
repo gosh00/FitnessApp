@@ -110,7 +110,7 @@ const HomePage = ({ currentUser, setPage }) => {
       {/* Hero Section */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          <h1 className={styles.heroTitle}>Добре дошъл/дошла, {stats.displayName}</h1>
+          <h1 className={styles.heroTitle}>Добре дошли, {stats.displayName}</h1>
           <p className={styles.heroSubtitle}>
             Следи прогреса си, записвай тренировки и постигай целите си с Trainify
           </p>

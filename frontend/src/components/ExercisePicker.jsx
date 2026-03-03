@@ -68,7 +68,7 @@ const ui = {
 };
 
 export default function ExercisePicker({
-  valueExercise,        // object: {id, name, muscle_group} или null
+  valueExercise = null,        // object: {id, name, muscle_group} или null
   onPickExercise,       // (exObj) => void
   disabled,
   muscleOptions = [],
@@ -102,9 +102,10 @@ export default function ExercisePicker({
   };
 
   // Синхронизация ако отвън се смени упражнението
+  // guard against null valueExercise by using optional chaining in deps
   useEffect(() => {
     setQuery(valueExercise?.name || "");
-  }, [valueExercise?.id]); // само при смяна на id
+  }, [valueExercise?.id, valueExercise?.name]); // само при смяна на id
 
   // Supabase search
   useEffect(() => {

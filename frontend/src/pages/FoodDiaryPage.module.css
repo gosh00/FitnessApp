@@ -1,56 +1,56 @@
-/* src/pages/FoodDiaryPage.module.css */
-/* CLEAN LIGHT UI + Trainify accent + FIXED top controls alignment */
+/* FoodDiaryPage.module.css — Trainify Dark (clean + aligned + readable selects) */
 
 :root {
-  --bg: #ffffff;
-  --card: #ffffff;
-  --soft: #f7f7f8;
+  --bg: #000000;
+  --panel: #0b0b0b;
+  --panel2: rgba(255, 255, 255, 0.04);
 
-  --text: #111827;
-  --muted: #6b7280;
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.62);
+  --muted2: rgba(255, 255, 255, 0.48);
 
-  --border: #e5e7eb;
-  --border-2: #d1d5db;
+  --border: rgba(255, 255, 255, 0.12);
+  --border2: rgba(255, 255, 255, 0.18);
 
   --accent: #e11d2e;
-  --accent-soft: rgba(225, 29, 46, 0.12);
+  --accentSoft: rgba(225, 29, 46, 0.14);
 
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --shadow: 0 18px 55px rgba(0, 0, 0, 0.55);
 }
 
 .page {
   max-width: 980px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 22px 16px 28px;
   color: var(--text);
 }
 
+/* Title */
 .title {
-  margin: 0 0 16px 0;
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
+  margin: 0 0 14px 0;
+  font-size: 22px;
+  font-weight: 1000;
+  letter-spacing: 0.2px;
   color: var(--text);
 }
 
-/* ===== Controls (base) ===== */
+/* ===== Controls ===== */
 
 .controls {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: center;
   margin-bottom: 12px;
 }
 
-/* ===== FIX: align the two top control rows as a grid ===== */
-/* 1) row with Date */
-/* 2) row with Meal + Search + Food + Grams + Add */
+/* 1) Date row */
 .controls:first-of-type {
   display: flex;
   align-items: center;
 }
 
+/* 2) Main add row */
 .controls:nth-of-type(2) {
   display: grid;
   grid-template-columns:
@@ -58,16 +58,9 @@
     1fr   /* search */
     280px /* food select */
     120px /* grams */
-    84px; /* add */
+    92px; /* add */
   gap: 12px;
   align-items: center;
-}
-
-/* row with +50/+100/+200/reset -> keep flex */
-.controls:nth-of-type(3) {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
 }
 
 /* Date chip */
@@ -78,45 +71,89 @@
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--card);
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.04);
+  font-weight: 900;
   color: var(--text);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
 }
 
 .dateLabel input {
   border: 0;
   outline: none;
   background: transparent;
+  font-weight: 900;
   color: var(--text);
-  font-weight: 700;
+  color-scheme: dark;
 }
 
-/* Inputs */
+/* Inputs base */
 .select,
 .gramsInput {
   height: 44px;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--card);
-  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
 }
 
+/* ✅ typed text slightly faded (as you asked) */
+.select,
+.gramsInput {
+  color: rgba(255, 255, 255, 0.82);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.82);
+  font-weight: 800;
+}
+
+/* Placeholder */
+.select::placeholder,
+.gramsInput::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+/* Focus */
 .select:focus,
 .gramsInput:focus {
   border-color: rgba(225, 29, 46, 0.55);
-  box-shadow: 0 0 0 4px var(--accent-soft);
+  box-shadow: 0 0 0 4px var(--accentSoft);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Hover */
+.select:hover,
+.gramsInput:hover {
+  border-color: var(--border2);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 /* Grams */
 .gramsInput {
   text-align: center;
-  font-weight: 800;
+  font-weight: 1000;
+}
+
+/* ✅ SELECT: Windows/Chrome visibility fix */
+.select {
+  padding-right: 40px;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+.select option {
+  background: #0b0b0b;
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 700;
+}
+
+/* Autofill safety */
+input:-webkit-autofill,
+select:-webkit-autofill,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.82) !important;
+  transition: background-color 9999s ease-out 0s;
 }
 
 /* Primary button */
@@ -127,7 +164,7 @@
   border-radius: 12px;
   background: var(--accent);
   color: #fff;
-  font-weight: 900;
+  font-weight: 1000;
   cursor: pointer;
   box-sizing: border-box;
 
@@ -136,13 +173,13 @@
   justify-content: center;
 
   transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.2s ease;
-  box-shadow: 0 10px 22px rgba(225, 29, 46, 0.18);
+  box-shadow: 0 14px 30px rgba(225, 29, 46, 0.22);
 }
 
 .addBtn:hover {
   transform: translateY(-1px);
-  filter: brightness(1.02);
-  box-shadow: 0 14px 28px rgba(225, 29, 46, 0.22);
+  filter: brightness(1.03);
+  box-shadow: 0 18px 38px rgba(225, 29, 46, 0.28);
 }
 
 .addBtn:disabled {
@@ -152,30 +189,8 @@
   box-shadow: none;
 }
 
-/* Secondary button (also used for reset to 100g) */
+/* Delete button (inline only) */
 .deleteBtn {
-  height: 44px;
-  padding: 0 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #ffffff;
-  color: var(--text);
-  font-weight: 900;
-  cursor: pointer;
-  box-sizing: border-box;
-
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
-}
-
-.deleteBtn:hover {
-  transform: translateY(-1px);
-  background: #fafafa;
-  border-color: var(--border-2);
-}
-
-/* Inline delete (✕) inside table */
-.table .deleteBtn {
   height: auto;
   padding: 6px 10px;
   border-radius: 10px;
@@ -184,14 +199,15 @@
   box-shadow: none;
   font-size: 16px;
   line-height: 1;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 
-.table .deleteBtn:hover {
-  background: var(--accent-soft);
+.deleteBtn:hover {
+  background: rgba(225, 29, 46, 0.12);
   color: var(--accent);
   border-color: rgba(225, 29, 46, 0.22);
-  transform: none;
 }
 
 /* States */
@@ -199,56 +215,56 @@
   margin: 8px 0 0;
   padding: 10px 12px;
   border-radius: 12px;
-  background: var(--accent-soft);
+  background: rgba(225, 29, 46, 0.12);
   border: 1px solid rgba(225, 29, 46, 0.25);
-  color: #8b0a1a;
+  color: rgba(255, 255, 255, 0.92);
   font-weight: 900;
 }
 
 .loading {
   margin: 8px 0 0;
   color: var(--muted);
-  font-weight: 800;
+  font-weight: 900;
 }
 
-/* ===== Card/Table ===== */
+/* ===== Cards / Tables ===== */
 
 .tableWrap {
   margin-top: 14px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: var(--card);
+  background: var(--panel);
   overflow: hidden;
   box-shadow: var(--shadow);
 }
 
 .tableHeader {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--soft);
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 
 .tableTitle {
-  font-weight: 900;
+  font-weight: 1000;
   color: var(--text);
-  letter-spacing: -0.2px;
+  letter-spacing: 0.2px;
 }
 
 .totalsMini {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
-  color: var(--text);
+  color: rgba(255, 255, 255, 0.86);
   font-weight: 900;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .totalsMini span {
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.55);
   font-weight: 900;
 }
 
@@ -261,25 +277,25 @@
 
 .th {
   text-align: left;
-  padding: 12px 16px;
-  font-size: 12px;
-  color: var(--muted);
-  background: #ffffff;
-  border-bottom: 1px solid var(--border);
-  font-weight: 900;
+  padding: 11px 14px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 1000;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
 }
 
 .tr:hover {
-  background: #fafafa;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .td {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   vertical-align: middle;
-  color: var(--text);
+  color: rgba(255, 255, 255, 0.86);
 }
 
 /* Accent line on food cell */
@@ -300,24 +316,15 @@
 }
 
 .foodName {
-  font-weight: 900;
+  font-weight: 1000;
   margin-bottom: 2px;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .foodBrand {
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
   font-weight: 800;
-}
-
-/* Total row (if used) */
-.totalRow .td {
-  font-weight: 900;
-  background: #ffffff;
-}
-
-.totalLabel {
-  color: var(--text);
 }
 
 /* ===== Responsive ===== */
@@ -330,16 +337,16 @@
 
 @media (max-width: 680px) {
   .page {
-    padding: 16px;
+    padding: 16px 12px 22px;
   }
 
   .title {
-    font-size: 24px;
+    font-size: 20px;
   }
 
   .th,
   .td {
-    padding: 12px 12px;
+    padding: 10px 10px;
   }
 
   /* Hide Sugars + Fiber on small screens */

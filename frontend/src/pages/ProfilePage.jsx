@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./ProfilePage.module.css";
-import sharedStyles from "../styles/shared.module.css";
 import { supabase } from "../supabaseClient";
 import api from "../api";
 
-const GOAL_OPTIONS = ["Maintain Weight", "Weight loss", "Gain Weight"];
+// ✅ DB values (EN) -> UI labels (BG)
+const GOAL_OPTIONS = [
+  { value: "Maintain Weight", label: "Поддържане на тегло" },
+  { value: "Weight loss", label: "Отслабване" },
+  { value: "Gain Weight", label: "Покачване на тегло" },
+];
 
-// ✅ One single default avatar everywhere (same as Header fallback)
-// Put this file in: /public/default-avatar.png
+// ✅ One default avatar everywhere
 const DEFAULT_AVATAR = "/default-avatar.png";
 
 export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
@@ -28,18 +31,22 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
   const [height, setHeight] = useState("");
   const [goal, setGoal] = useState("Maintain Weight");
 
+  // cache-bust for avatar
   const bust = (url) => {
     if (!url) return "";
     return `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
   };
 
-  // ✅ Avatar resolver:
-  // - if DB has avatar_url -> use it
-  // - else -> use DEFAULT_AVATAR (same everywhere)
   const resolveAvatar = (rowAvatarUrl) => bust(rowAvatarUrl || DEFAULT_AVATAR);
+
+  const goalLabel = useMemo(() => {
+    return GOAL_OPTIONS.find((g) => g.value === goal)?.label || "Поддържане на тегло";
+  }, [goal]);
 
   useEffect(() => {
     let isMounted = true;
+
+    const resolveAvatar = (rowAvatarUrl) => bust(rowAvatarUrl || DEFAULT_AVATAR);
 
     const loadProfile = async () => {
       setLoading(true);
@@ -50,13 +57,13 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         if (authErr) throw authErr;
 
         const authUser = authRes?.user ?? currentUser ?? null;
-        if (!authUser) throw new Error("Няма влязъл потребител.");
+        if (!authUser) throw new Error("Няма активен потребител.");
 
         const _authId = authUser.id;
         const email = authUser.email;
 
-        if (!_authId) throw new Error("Липсва потребителско id (auth).");
-        if (!email) throw new Error("Потребителят няма имейл.");
+        if (!_authId) throw new Error("Липсва идентификатор на потребителя (auth id).");
+        if (!email) throw new Error("Липсва имейл на потребителя.");
 
         if (!isMounted) return;
         setAuthId(_authId);
@@ -64,7 +71,8 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         // ✅ Ensure Users row exists via backend (service role)
         const res = await api.post("/profile/ensure", { auth_id: _authId, email });
         const row = res.data;
-        if (!row?.id) throw new Error("Неуспешно зареждане на профил (липсва user row).");
+
+        if (!row?.id) throw new Error("Неуспешно зареждане на профила.");
 
         if (!isMounted) return;
 
@@ -75,12 +83,17 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         setAge(row.age ?? "");
         setWeight(row.weight ?? "");
         setHeight(row.height ?? "");
-        setGoal(GOAL_OPTIONS.includes(row.goal) ? row.goal : "Maintain Weight");
+
+        const validGoal =
+          GOAL_OPTIONS.some((g) => g.value === row.goal) ? row.goal : "Maintain Weight";
+        setGoal(validGoal);
 
         setAvatarUrl(resolveAvatar(row.avatar_url));
       } catch (err) {
         const msg =
-          err?.response?.data?.error || err?.message || "Неуспешно зареждане на профила.";
+          err?.response?.data?.error ||
+          err?.message ||
+          "Възникна грешка при зареждане на профила.";
         if (isMounted) setPageError(msg);
       } finally {
         if (isMounted) setLoading(false);
@@ -106,7 +119,10 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     setAge(userRow.age ?? "");
     setWeight(userRow.weight ?? "");
     setHeight(userRow.height ?? "");
-    setGoal(GOAL_OPTIONS.includes(userRow.goal) ? userRow.goal : "Maintain Weight");
+
+    const validGoal =
+      GOAL_OPTIONS.some((g) => g.value === userRow.goal) ? userRow.goal : "Maintain Weight";
+    setGoal(validGoal);
 
     setAvatarUrl(resolveAvatar(userRow.avatar_url));
 
@@ -114,31 +130,40 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     setPageError("");
   };
 
+  const validate = () => {
+    const ageNum = age === "" ? null : Number(age);
+    const weightNum = weight === "" ? null : Number(weight);
+    const heightNum = height === "" ? null : Number(height);
+
+    if (ageNum !== null && (!Number.isFinite(ageNum) || ageNum < 0 || ageNum > 120)) {
+      return "Възрастта трябва да е между 0 и 120.";
+    }
+    if (heightNum !== null && (!Number.isFinite(heightNum) || heightNum < 50 || heightNum > 250)) {
+      return "Ръстът трябва да е между 50 и 250 см.";
+    }
+    if (weightNum !== null && (!Number.isFinite(weightNum) || weightNum < 20 || weightNum > 400)) {
+      return "Теглото трябва да е между 20 и 400 кг.";
+    }
+    if (!GOAL_OPTIONS.some((g) => g.value === goal)) {
+      return "Избраната цел е невалидна.";
+    }
+    return "";
+  };
+
   const handleSave = async () => {
     if (!userRow) return;
+
+    const v = validate();
+    if (v) {
+      setPageError(v);
+      return;
+    }
 
     setPageError("");
 
     const ageNum = age === "" ? null : Number(age);
     const weightNum = weight === "" ? null : Number(weight);
     const heightNum = height === "" ? null : Number(height);
-
-    if (ageNum !== null && (!Number.isFinite(ageNum) || ageNum < 0 || ageNum > 120)) {
-      setPageError("Възрастта трябва да е между 0 и 120.");
-      return;
-    }
-    if (heightNum !== null && (!Number.isFinite(heightNum) || heightNum < 50 || heightNum > 250)) {
-      setPageError("Ръстът трябва да е между 50 и 250 см.");
-      return;
-    }
-    if (weightNum !== null && (!Number.isFinite(weightNum) || weightNum < 20 || weightNum > 400)) {
-      setPageError("Теглото трябва да е между 20 и 400 кг.");
-      return;
-    }
-    if (!GOAL_OPTIONS.includes(goal)) {
-      setPageError("Невалидна цел.");
-      return;
-    }
 
     try {
       const res = await api.post("/profile/update", {
@@ -148,11 +173,11 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         age: ageNum,
         weight: weightNum,
         height: heightNum,
-        goal,
+        goal, // ✅ keep DB value (EN)
       });
 
       const updated = res.data;
-      if (!updated?.id) throw new Error("Неуспешно записване на профила.");
+      if (!updated?.id) throw new Error("Записът на профила не върна данни.");
 
       setUserRow(updated);
 
@@ -161,7 +186,10 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       setAge(updated.age ?? "");
       setWeight(updated.weight ?? "");
       setHeight(updated.height ?? "");
-      setGoal(GOAL_OPTIONS.includes(updated.goal) ? updated.goal : "Maintain Weight");
+
+      const validGoal =
+        GOAL_OPTIONS.some((g) => g.value === updated.goal) ? updated.goal : "Maintain Weight";
+      setGoal(validGoal);
 
       setAvatarUrl(resolveAvatar(updated.avatar_url));
 
@@ -172,10 +200,13 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
 
       onUpdateProfile?.(currentUser);
 
-      alert("Профилът е обновен!");
+      // По-нежен UX (можеш да го замениш с toast ако искаш)
+      alert("Профилът е обновен успешно!");
     } catch (err) {
       const msg =
-        err?.response?.data?.error || err?.message || "Неуспешно записване на профила.";
+        err?.response?.data?.error ||
+        err?.message ||
+        "Възникна грешка при запис на профила.";
       setPageError(msg);
     }
   };
@@ -191,19 +222,19 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     }
 
     if (!file.type.startsWith("image/")) {
-      alert("Моля, избери изображение.");
+      alert("Моля, избери файл с изображение.");
       e.target.value = "";
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Максимален размер: 5MB.");
+      alert("Максималният размер е 5MB.");
       e.target.value = "";
       return;
     }
 
     if (!userRow?.id || !authId) {
-      setPageError("Липсва user id / auth id.");
+      setPageError("Липсва потребителски идентификатор.");
       e.target.value = "";
       return;
     }
@@ -224,16 +255,12 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       const newUrl = res.data?.avatar_url;
       if (!newUrl) throw new Error("Сървърът не върна avatar_url.");
 
-      // ✅ show immediately
       setAvatarUrl(bust(newUrl));
-
-      // ✅ keep row in sync
       setUserRow((prev) => (prev ? { ...prev, avatar_url: newUrl } : prev));
 
-      // ✅ refresh header instantly
       window.dispatchEvent(new Event("profile_saved"));
     } catch (err) {
-      const msg = err?.response?.data?.error || err?.message || "Неуспешно качване.";
+      const msg = err?.response?.data?.error || err?.message || "Качването не беше успешно.";
       setPageError(msg);
     } finally {
       setUploadingAvatar(false);
@@ -241,189 +268,224 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     }
   };
 
-  const goalLabel = (opt) => {
-    if (opt === "Maintain Weight") return "Поддържане";
-    if (opt === "Weight loss") return "Отслабване";
-    if (opt === "Gain Weight") return "Качване";
-    return opt;
-  };
+  const goBack = () => setPage?.("home");
 
   if (loading) {
     return (
-      <div className={sharedStyles.card}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 className={styles.title}>Моят профил</h2>
-          <button className={sharedStyles.secondaryButton} onClick={() => setPage?.("home")}>
-            Назад
-          </button>
+      <div className={styles.page}>
+        <div className={styles.shell}>
+          <div className={styles.topBar}>
+            <h2 className={styles.title}>Моят профил</h2>
+            <button className={styles.backBtn} onClick={goBack}>Назад</button>
+          </div>
+          <div className={styles.card}>
+            <div className={styles.loader}>
+              <div className={styles.spinner} />
+              <p>Зареждане на профила…</p>
+            </div>
+          </div>
         </div>
-        <p>Зареждане…</p>
       </div>
     );
   }
 
   if (pageError && !userRow) {
     return (
-      <div className={sharedStyles.card}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 className={styles.title}>Моят профил</h2>
-          <button className={sharedStyles.secondaryButton} onClick={() => setPage?.("home")}>
-            Назад
-          </button>
+      <div className={styles.page}>
+        <div className={styles.shell}>
+          <div className={styles.topBar}>
+            <h2 className={styles.title}>Моят профил</h2>
+            <button className={styles.backBtn} onClick={goBack}>Назад</button>
+          </div>
+
+          <div className={styles.card}>
+            <div className={styles.errorBox}>
+              <div className={styles.errorTitle}>Възникна проблем</div>
+              <div className={styles.errorText}>{pageError}</div>
+            </div>
+          </div>
         </div>
-        <p style={{ color: "red" }}>{pageError}</p>
       </div>
     );
   }
 
   return (
-    <div className={sharedStyles.card}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 className={styles.title}>Моят профил</h2>
-        <button className={sharedStyles.secondaryButton} onClick={() => setPage?.("home")}>
-          Назад
-        </button>
-      </div>
-
-      {pageError && <p style={{ color: "red" }}>{pageError}</p>}
-
-      {/* AVATAR */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
-        <img
-          src={avatarUrl || DEFAULT_AVATAR}
-          alt="avatar"
-          style={{
-            width: 88,
-            height: 88,
-            borderRadius: "50%",
-            objectFit: "cover",
-            border: "2px solid #ccc",
-            background: "#f5f5f5",
-          }}
-          onError={(ev) => {
-            ev.currentTarget.src = DEFAULT_AVATAR;
-          }}
-        />
-
-        <label
-          className={sharedStyles.secondaryButton}
-          style={{
-            cursor: editing && !uploadingAvatar ? "pointer" : "not-allowed",
-            opacity: editing && !uploadingAvatar ? 1 : 0.6,
-          }}
-        >
-          {uploadingAvatar ? "Качване…" : "Смени снимка"}
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            disabled={!editing || uploadingAvatar}
-            onChange={handleAvatarChange}
-          />
-        </label>
-      </div>
-
-      <div className={styles.profileGrid}>
-        <div className={sharedStyles.formGroup}>
-          <label className={sharedStyles.formLabel}>Показвано име</label>
-          <input
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            disabled={!editing}
-            className={sharedStyles.input}
-            style={{ backgroundColor: editing ? "#FFFFFC" : "#f5f5f5" }}
-          />
-        </div>
-
-        <div className={sharedStyles.formGroup}>
-          <label className={sharedStyles.formLabel}>Имейл</label>
-          <input type="email" value={userRow?.email ?? ""} disabled className={sharedStyles.input} />
-        </div>
-
-        <div className={sharedStyles.formGroup}>
-          <label className={sharedStyles.formLabel}>Цел</label>
-          <select
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            disabled={!editing}
-            className={sharedStyles.input}
-            style={{ backgroundColor: editing ? "#FFFFFC" : "#f5f5f5" }}
-          >
-            {GOAL_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {goalLabel(opt)}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className={sharedStyles.formGroup}>
-          <label className={sharedStyles.formLabel}>Описание (Bio)</label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            disabled={!editing}
-            className={sharedStyles.textarea}
-            style={{ backgroundColor: editing ? "#FFFFFC" : "#f5f5f5" }}
-            placeholder="Разкажи накратко за целите и пътя си във фитнеса…"
-          />
-        </div>
-
-        <div className={styles.statsGrid}>
-          <div className={sharedStyles.formGroup}>
-            <label className={sharedStyles.formLabel}>Възраст</label>
-            <input
-              type="number"
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              disabled={!editing}
-              className={sharedStyles.input}
-              style={{ backgroundColor: editing ? "#FFFFFC" : "#f5f5f5" }}
-            />
+    <div className={styles.page}>
+      <div className={styles.shell}>
+        {/* TOP BAR */}
+        <div className={styles.topBar}>
+          <div>
+            <h2 className={styles.title}>Моят профил</h2>
+            <p className={styles.subtitle}>
+              Актуализирай данните си и следи целите си по-лесно.
+            </p>
           </div>
 
-          <div className={sharedStyles.formGroup}>
-            <label className={sharedStyles.formLabel}>Тегло (кг)</label>
-            <input
-              type="number"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              disabled={!editing}
-              className={sharedStyles.input}
-              style={{ backgroundColor: editing ? "#FFFFFC" : "#f5f5f5" }}
-              step="0.1"
-            />
-          </div>
-
-          <div className={sharedStyles.formGroup}>
-            <label className={sharedStyles.formLabel}>Ръст (см)</label>
-            <input
-              type="number"
-              value={height}
-              onChange={(e) => setHeight(e.target.value)}
-              disabled={!editing}
-              className={sharedStyles.input}
-              style={{ backgroundColor: editing ? "#FFFFFC" : "#f5f5f5" }}
-            />
-          </div>
+          <button className={styles.backBtn} onClick={goBack}>
+            Назад
+          </button>
         </div>
 
-        <div className={styles.buttonGroup}>
-          {!editing ? (
-            <button onClick={handleEdit} className={sharedStyles.primaryButton}>
-              Редактирай профил
-            </button>
-          ) : (
-            <>
-              <button onClick={handleSave} className={sharedStyles.primaryButton}>
-                Запази промените
-              </button>
-              <button onClick={handleCancel} className={sharedStyles.secondaryButton}>
-                Отказ
-              </button>
-            </>
-          )}
+        {/* CARD */}
+        <div className={styles.card}>
+          {pageError ? (
+            <div className={styles.errorInline} role="alert">
+              {pageError}
+            </div>
+          ) : null}
+
+          {/* AVATAR */}
+          <div className={styles.avatarRow}>
+            <div className={styles.avatarWrap}>
+              <img
+                src={avatarUrl || DEFAULT_AVATAR}
+                alt="Профилна снимка"
+                className={styles.avatar}
+                onError={(ev) => {
+                  ev.currentTarget.src = DEFAULT_AVATAR;
+                }}
+              />
+              <div className={styles.avatarMeta}>
+                <div className={styles.displayNameTop}>
+                  {displayName?.trim() ? displayName : "Потребител"}
+                </div>
+                <div className={styles.goalPill} title="Текуща цел">
+                  🎯 {goalLabel}
+                </div>
+              </div>
+            </div>
+
+            <label
+              className={`${styles.btn} ${styles.btnSecondary}`}
+              style={{
+                cursor: editing && !uploadingAvatar ? "pointer" : "not-allowed",
+                opacity: editing && !uploadingAvatar ? 1 : 0.55,
+              }}
+            >
+              {uploadingAvatar ? "Качване…" : "Смени снимка"}
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                disabled={!editing || uploadingAvatar}
+                onChange={handleAvatarChange}
+              />
+            </label>
+          </div>
+
+          {/* FORM GRID */}
+          <div className={styles.grid}>
+            <div className={styles.field}>
+              <label className={styles.label}>Потребителско име</label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                disabled={!editing}
+                className={styles.input}
+                placeholder="Напр. ViliFit"
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Имейл</label>
+              <input
+                type="email"
+                value={userRow?.email ?? ""}
+                disabled
+                className={styles.input}
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Цел</label>
+              <select
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                disabled={!editing}
+                className={styles.input}
+              >
+                {GOAL_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.fieldWide}>
+              <label className={styles.label}>Кратко описание</label>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                disabled={!editing}
+                className={styles.textarea}
+                placeholder="Опиши накратко своята фитнес цел и мотивация…"
+              />
+            </div>
+
+            <div className={styles.statsGrid}>
+              <div className={styles.field}>
+                <label className={styles.label}>Възраст</label>
+                <input
+                  type="number"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  disabled={!editing}
+                  className={styles.input}
+                  placeholder="напр. 25"
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>Тегло (кг)</label>
+                <input
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  disabled={!editing}
+                  className={styles.input}
+                  step="0.1"
+                  placeholder="напр. 70"
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>Ръст (см)</label>
+                <input
+                  type="number"
+                  value={height}
+                  onChange={(e) => setHeight(e.target.value)}
+                  disabled={!editing}
+                  className={styles.input}
+                  placeholder="напр. 175"
+                />
+              </div>
+            </div>
+
+            {/* ACTIONS */}
+            <div className={styles.actions}>
+              {!editing ? (
+                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleEdit}>
+                  Редактирай профил
+                </button>
+              ) : (
+                <>
+                  <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSave}>
+                    Запази промените
+                  </button>
+                  <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleCancel}>
+                    Откажи
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* small help */}
+          <div className={styles.note}>
+            💡 Съвет: за най-точни калорийни изчисления, поддържай актуални ръст и тегло.
+          </div>
         </div>
       </div>
     </div>

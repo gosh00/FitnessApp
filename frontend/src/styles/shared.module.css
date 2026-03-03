@@ -7,7 +7,7 @@
   --border: rgba(255, 255, 255, 0.14);
   --borderHover: rgba(255, 255, 255, 0.22);
 
-  --text: rgba(255, 255, 255, 0.92);
+--text: rgba(255, 255, 255, 0.86);
   --muted: rgba(255, 255, 255, 0.62);
 
   --accent: #e11d2e;
@@ -49,7 +49,7 @@
 /* Ensure typed text is visible in Chromium/OS autofill cases */
 .input {
   color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  -webkit-text-fill-color: #ffffffc2 !important;
 }
 
 .input::placeholder {
@@ -90,11 +90,6 @@
   box-sizing: border-box;
 
   transition: all 0.15s ease;
-}
-
-.textarea {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
 }
 
 /* Autofill fixes for some Chromium builds */
@@ -248,3 +243,4 @@ textarea:-webkit-autofill {
   background: rgba(225, 29, 46, 0.35);
   color: white;
 }
+
