@@ -30,23 +30,20 @@ export default function Footer({ setPage }) {
 
     const loadStats = async () => {
       setLoading(true);
+
       try {
-        // ✅ Users count
         const { count: usersCount } = await supabase
           .from("Users")
           .select("id", { count: "exact", head: true });
 
-        // ✅ Workouts count
         const { count: workoutsCount } = await supabase
           .from("Workouts")
           .select("id", { count: "exact", head: true });
 
-        // ✅ ExerciseLog count
         const { count: exerciseLogsCount } = await supabase
           .from("ExerciseLog")
           .select("id", { count: "exact", head: true });
 
-        // ✅ FoodLogs count (if you have table named FoodLogs)
         const { count: foodLogsCount } = await supabase
           .from("FoodLogs")
           .select("id", { count: "exact", head: true });
@@ -59,10 +56,6 @@ export default function Footer({ setPage }) {
           exerciseLogs: exerciseLogsCount ?? 0,
           foodLogs: foodLogsCount ?? 0,
         });
-      } catch {
-        // if anything fails, keep nulls (footer will show "—")
-        if (!mounted) return;
-        setStats((p) => ({ ...p }));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -82,25 +75,25 @@ export default function Footer({ setPage }) {
     <footer className="tf-footer">
       <div className="tf-footer-container">
         <div className="tf-footer-top">
+
           {/* Brand */}
           <div className="tf-footer-brand">
-            <div className="tf-footer-logo" role="img" aria-label="Trainify">
-              <TrainifyLogo as="div" className="tf-logo" />
-            </div>
+            <TrainifyLogo as="div" className="tf-logo" />
 
             <p className="tf-footer-desc">
-              Trainify ти помага да записваш тренировките си, да следиш храненето и да виждаш прогреса си ясно — на едно място.
+              Trainify ти помага да записваш тренировките си, да следиш храненето
+              и да виждаш прогреса си ясно — на едно място.
             </p>
           </div>
 
           {/* Links */}
-          <div className="tf-footer-links">
+          <div>
             <h4 className="tf-footer-title">Информация</h4>
+
             <div className="tf-links">
               {links.map((l) => (
                 <button
                   key={l.page}
-                  type="button"
                   className="tf-link"
                   onClick={() => go(l.page)}
                 >
@@ -111,10 +104,10 @@ export default function Footer({ setPage }) {
           </div>
 
           {/* Stats */}
-          <div className="tf-footer-stats">
-            <h4 className="tf-footer-title">Статистика на живо</h4>
+          <div>
+            <h4 className="tf-footer-title">Статистика</h4>
 
-            <div className="tf-stats-grid" aria-busy={loading ? "true" : "false"}>
+            <div className="tf-stats-grid">
               <div className="tf-stat">
                 <div className="tf-stat-number">{stats.users ?? "—"}</div>
                 <div className="tf-stat-label">Потребители</div>
@@ -127,39 +120,67 @@ export default function Footer({ setPage }) {
 
               <div className="tf-stat">
                 <div className="tf-stat-number">{stats.exerciseLogs ?? "—"}</div>
-                <div className="tf-stat-label">Записи на упражнения</div>
+                <div className="tf-stat-label">Упражнения</div>
               </div>
 
               <div className="tf-stat">
                 <div className="tf-stat-number">{stats.foodLogs ?? "—"}</div>
-                <div className="tf-stat-label">Записи на храна</div>
+                <div className="tf-stat-label">Хранителни записи</div>
               </div>
             </div>
 
-            {loading ? <div className="tf-loading">Обновяване…</div> : null}
+            {loading && <div className="tf-loading">Обновяване…</div>}
           </div>
+
+          {/* Contacts */}
+          <div>
+            <h4 className="tf-footer-title">Контакти</h4>
+
+            <div className="tf-contact-list">
+              <div className="tf-contact-item">
+                <div className="tf-contact-icon"></div>
+                <div className="tf-contact-text">
+                  <div className="tf-contact-label">Имейл</div>
+                  <div className="tf-contact-value">
+                    <a href="mailto:support@trainify.app">
+                      support@trainify.app
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="tf-contact-item">
+                <div className="tf-contact-icon"></div>
+                <div className="tf-contact-text">
+                  <div className="tf-contact-label">Телефон</div>
+                  <div className="tf-contact-value">
+                    <a href="tel:+359888123456">+359 888 123 456</a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="tf-contact-item">
+                <div className="tf-contact-icon"></div>
+                <div className="tf-contact-text">
+                  <div className="tf-contact-label">Локация</div>
+                  <div className="tf-contact-value">Sofia, Bulgaria</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="tf-social">
+              <div className="tf-social-link">Instagram</div>
+              <div className="tf-social-link">GitHub</div>
+              <div className="tf-social-link">LinkedIn</div>
+            </div>
+          </div>
+
         </div>
 
         <div className="tf-footer-bottom">
           <div className="tf-copyright">
             © {currentYear} Trainify. Всички права запазени.
           </div>
-
-          {/*
-          <div className="tf-bottom-links">
-            <button type="button" className="tf-mini-link" onClick={() => go("privacy")}>
-              Поверителност
-            </button>
-            <span className="tf-dot">•</span>
-            <button type="button" className="tf-mini-link" onClick={() => go("terms")}>
-              Условия
-            </button>
-            <span className="tf-dot">•</span>
-            <button type="button" className="tf-mini-link" onClick={() => go("cookies")}>
-              Бисквитки
-            </button>
-          </div>
-          */}
         </div>
       </div>
     </footer>

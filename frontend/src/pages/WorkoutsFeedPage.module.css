@@ -278,7 +278,7 @@
 }
 .x-modal-card{
   width:100%;
-  max-width:520px;
+  max-width:560px; /* малко по-широк за серии/кг */
   background:#1a1a1a;
   border:1px solid rgba(255,255,255,.10);
   border-radius:14px;
@@ -304,7 +304,7 @@
 }
 .x-close-btn:hover{background:rgba(255,255,255,.06)}
 
-.x-modal-body{padding:14px;max-height:60vh;overflow:auto}
+.x-modal-body{padding:14px;max-height:70vh;overflow:auto}
 
 .x-exercise-row{
   display:flex;
@@ -335,19 +335,95 @@
   width:100%;
   padding:10px 12px;
   border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);
-  background:transparent;
-  color:#e8e8e8;
+  border:none;
+  background:#e11d2e;
+  color:#fff;
   font-size:14px;
   font-weight:900;
   cursor:pointer;
 }
-.x-modal-close-big:hover{background:rgba(255,255,255,.06)}
+.x-modal-close-big:hover{background:#fff;color:#e11d2e;box-shadow:0 6px 16px rgba(225,29,46,0.18)}
+
+/* ============================================================
+   ✅ NEW: Детайлен изглед в модала (упражнения + серии + кг)
+   ============================================================ */
+
+.x-exercise-block{
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.03);
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:10px;
+}
+
+.x-exercise-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding-bottom:10px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  margin-bottom:10px;
+}
+
+.x-ex-empty{
+  font-size:13px;
+  color:#999999;
+  font-weight:700;
+  padding:6px 2px;
+}
+
+/* grid for sets */
+.x-sets-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:10px;
+}
+
+/* one set card */
+.x-set-chip{
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.25);
+  border-radius:12px;
+  padding:10px 10px;
+}
+
+.x-set-title{
+  font-size:12px;
+  font-weight:900;
+  color:#f5f5f5;
+  margin-bottom:8px;
+  letter-spacing:.2px;
+}
+
+.x-set-line{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:6px 0;
+  border-top:1px dashed rgba(255,255,255,.10);
+}
+.x-set-line:first-of-type{border-top:none;padding-top:0}
+
+.x-set-key{
+  font-size:12px;
+  color:#999999;
+  font-weight:800;
+}
+
+.x-set-val{
+  font-size:13px;
+  color:#e8e8e8;
+  font-weight:900;
+  white-space:nowrap;
+}
 
 /* responsive */
 @media (max-width:720px){
   .x-feed-container{max-width:100%;border-left:0;border-right:0}
   .x-author-name{max-width:170px}
+  .x-sets-grid{grid-template-columns:1fr;} /* на телефон - 1 колона */
+  .x-modal-card{max-width:100%}
 }
 @media (max-width:420px){
   .x-post{padding:10px 12px}

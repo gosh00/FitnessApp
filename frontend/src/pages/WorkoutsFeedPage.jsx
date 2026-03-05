@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 import styles from "./WorkoutsFeedPage.module.css";
 
@@ -34,9 +34,29 @@ function parseExercises(workout) {
   return Array.isArray(ex) ? ex : [];
 }
 
+function exDisplayName(ex, idx) {
+  // LogWorkoutPage записва exercise_name, но пазим fallback
+  return (
+    ex?.exercise_name ||
+    ex?.name ||
+    ex?.exercise?.name ||
+    `Упражнение ${idx + 1}`
+  );
+}
+
+function safeSets(ex) {
+  const sets = ex?.sets;
+  return Array.isArray(sets) ? sets : [];
+}
+
 // SVG icons
 const HeartIcon = ({ filled }) => (
-  <svg viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2}>
+  <svg
+    viewBox="0 0 24 24"
+    fill={filled ? "currentColor" : "none"}
+    stroke="currentColor"
+    strokeWidth={2}
+  >
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
 );
@@ -57,6 +77,8 @@ export default function WorkoutsFeedPage() {
   const [commentInput, setCommentInput] = useState({});
   const [selected, setSelected] = useState(null);
   const [viewerRow, setViewerRow] = useState(null);
+
+  const selectedExercises = useMemo(() => parseExercises(selected), [selected]);
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
@@ -96,8 +118,7 @@ export default function WorkoutsFeedPage() {
         if (uErr) throw uErr;
         const map = {};
         (uData || []).forEach((u) => (map[u.id] = u));
-        // include viewer
-        map[vRow.id] = vRow;
+        map[vRow.id] = vRow; // viewer
         setUsersById(map);
       }
 
@@ -142,12 +163,14 @@ export default function WorkoutsFeedPage() {
           .select("id, display_name, avatar_url")
           .in("id", userIds);
         if (uErr) throw uErr;
+
         setUsersById((prev) => {
           const next = { ...prev };
           (uData || []).forEach((u) => (next[u.id] = u));
           return next;
         });
       }
+
       setCommentsByWorkout((prev) => ({ ...prev, [workoutId]: cData || [] }));
     } catch (e) {
       console.error(e);
@@ -159,6 +182,7 @@ export default function WorkoutsFeedPage() {
     async (workoutId) => {
       const text = (commentInput[workoutId] || "").trim();
       if (!text) return;
+
       try {
         const { data: authRes } = await supabase.auth.getUser();
         const authUser = authRes?.user;
@@ -194,21 +218,22 @@ export default function WorkoutsFeedPage() {
   const toggleLike = useCallback(
     async (workoutId) => {
       const already = !!likesByMe[workoutId];
+
+      // optimistic UI
       setLikesByMe((prev) => ({ ...prev, [workoutId]: !prev[workoutId] }));
       setWorkouts((prev) =>
         prev.map((w) =>
           w.id !== workoutId
             ? w
-            : {
-                ...w,
-                likes_count: Math.max(0, (w.likes_count || 0) + (already ? -1 : 1)),
-              }
+            : { ...w, likes_count: Math.max(0, (w.likes_count || 0) + (already ? -1 : 1)) }
         )
       );
+
       try {
         const { data: authRes } = await supabase.auth.getUser();
         const authUser = authRes?.user;
         if (!authUser) throw new Error("Не сте влезли в профила си.");
+
         const { data: vRow } = await supabase
           .from("Users")
           .select("id")
@@ -223,11 +248,16 @@ export default function WorkoutsFeedPage() {
         }
       } catch (e) {
         console.error(e);
-        await loadFeed();
+        await loadFeed(); // rollback by refresh
       }
     },
     [likesByMe, loadFeed]
   );
+
+  const totalSetsInWorkout = (w) => {
+    const exs = parseExercises(w);
+    return exs.reduce((sum, ex) => sum + safeSets(ex).length, 0);
+  };
 
   return (
     <div className={styles["x-root"]}>
@@ -304,14 +334,9 @@ export default function WorkoutsFeedPage() {
                     <div className={styles["x-stat"]}>
                       <strong>{exercises.length}</strong> упражнения
                     </div>
-                    {exercises.length > 0 && (
-                      <div className={styles["x-stat"]}>
-                        <strong>
-                          {exercises.reduce((s, ex) => s + (Array.isArray(ex.sets) ? ex.sets.length : 0), 0)}
-                        </strong>{" "}
-                        серии
-                      </div>
-                    )}
+                    <div className={styles["x-stat"]}>
+                      <strong>{totalSetsInWorkout(w)}</strong> серии
+                    </div>
                   </div>
 
                   <button className={styles["x-view-btn"]} onClick={() => setSelected(w)}>
@@ -347,6 +372,7 @@ export default function WorkoutsFeedPage() {
                       const cu = usersById[c.user_id];
                       const cname = safeName(cu, "Потребител");
                       const cav = cu?.avatar_url || DEFAULT_AVATAR;
+
                       return (
                         <div key={c.id} className={styles["x-comment"]}>
                           <img
@@ -399,7 +425,7 @@ export default function WorkoutsFeedPage() {
         })}
       </div>
 
-      {/* MODAL */}
+      {/* MODAL — детайли: упражнения + серии + кг */}
       {selected && (
         <div className={styles["x-modal-overlay"]} onClick={() => setSelected(null)}>
           <div className={styles["x-modal-card"]} onClick={(e) => e.stopPropagation()}>
@@ -407,7 +433,8 @@ export default function WorkoutsFeedPage() {
               <div>
                 <div className={styles["x-modal-title"]}>{selected.name || "Тренировка"}</div>
                 <div className={styles["x-modal-sub"]}>
-                  {fmtDate(selected.created_at)} · {parseExercises(selected).length} упражнения
+                  {fmtDate(selected.created_at)} · {selectedExercises.length} упражнения ·{" "}
+                  {totalSetsInWorkout(selected)} серии
                 </div>
               </div>
               <button className={styles["x-close-btn"]} onClick={() => setSelected(null)}>
@@ -416,20 +443,45 @@ export default function WorkoutsFeedPage() {
             </div>
 
             <div className={styles["x-modal-body"]}>
-              {parseExercises(selected).length === 0 ? (
-                <div style={{ color: "#71767b", fontSize: 14, padding: "8px 0" }}>
-                  Няма записани упражнения.
-                </div>
+              {selectedExercises.length === 0 ? (
+                <div style={{ color: "#71767b", fontSize: 14, padding: "8px 0" }}>Няма записани упражнения.</div>
               ) : (
-                parseExercises(selected).map((ex, i) => (
-                  <div key={i} className={styles["x-exercise-row"]}>
-                    <div className={styles["x-ex-num"]}>{i + 1}</div>
-                    <div className={styles["x-ex-name"]}>{ex.name || `Упражнение ${i + 1}`}</div>
-                    <div className={styles["x-ex-sets"]}>
-                      {Array.isArray(ex.sets) ? ex.sets.length : 0} серии
+                selectedExercises.map((ex, i) => {
+                  const sets = safeSets(ex);
+                  const title = exDisplayName(ex, i);
+
+                  return (
+                    <div key={i} className={styles["x-exercise-block"]}>
+                      <div className={styles["x-exercise-head"]}>
+                        <div className={styles["x-ex-num"]}>{i + 1}</div>
+                        <div className={styles["x-ex-name"]}>{title}</div>
+                        <div className={styles["x-ex-sets"]}>{sets.length} серии</div>
+                      </div>
+
+                      {sets.length === 0 ? (
+                        <div className={styles["x-ex-empty"]}>Няма данни за серии.</div>
+                      ) : (
+                        <div className={styles["x-sets-grid"]}>
+                          {sets.map((s, si) => (
+                            <div key={si} className={styles["x-set-chip"]}>
+                              <div className={styles["x-set-title"]}>Серия {si + 1}</div>
+                              <div className={styles["x-set-line"]}>
+                                <span className={styles["x-set-key"]}>Повт.</span>
+                                <span className={styles["x-set-val"]}>{Number(s.reps) || 0}</span>
+                              </div>
+                              <div className={styles["x-set-line"]}>
+                                <span className={styles["x-set-key"]}>Тежест</span>
+                                <span className={styles["x-set-val"]}>
+                                  {Number(s.weight) || 0} {s.unit || "kg"}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 

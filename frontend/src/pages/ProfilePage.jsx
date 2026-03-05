@@ -20,7 +20,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
 
   const [authId, setAuthId] = useState(null);
   const [userRow, setUserRow] = useState(null);
-
+  
   const [avatarUrl, setAvatarUrl] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -30,6 +30,14 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [goal, setGoal] = useState("Maintain Weight");
+
+  // ✅ Change password (Variant A)
+  const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState("");
+  const [pwSuccess, setPwSuccess] = useState("");
+
+    
 
   // cache-bust for avatar
   const bust = (url) => {
@@ -200,7 +208,6 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
 
       onUpdateProfile?.(currentUser);
 
-      // По-нежен UX (можеш да го замениш с toast ако искаш)
       alert("Профилът е обновен успешно!");
     } catch (err) {
       const msg =
@@ -268,7 +275,56 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     }
   };
 
-  const goBack = () => setPage?.("home");
+  // ✅ Change password (Variant A)
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPwError("");
+    setPwSuccess("");
+
+    const current = pw.current;
+    const next = pw.next;
+    const confirm = pw.confirm;
+
+    if (!current) return setPwError("Въведи текущата си парола.");
+    if (!next || next.length < 6) return setPwError("Новата парола трябва да е поне 6 символа.");
+    if (next !== confirm) return setPwError("Новите пароли не съвпадат.");
+    if (next === current) return setPwError("Новата парола трябва да е различна от текущата.");
+
+    setPwSaving(true);
+
+    try {
+      const { data: authRes, error: authErr } = await supabase.auth.getUser();
+      if (authErr) throw authErr;
+
+      const email = authRes?.user?.email;
+      if (!email) throw new Error("Липсва имейл на потребителя.");
+
+      // ✅ Re-authenticate with current password
+      const { error: reauthErr } = await supabase.auth.signInWithPassword({
+        email,
+        password: current,
+      });
+      if (reauthErr) throw reauthErr;
+
+      // ✅ Update password
+      const { error: updErr } = await supabase.auth.updateUser({ password: next });
+      if (updErr) throw updErr;
+
+      setPwSuccess("✅ Паролата е сменена успешно.");
+      setPw({ current: "", next: "", confirm: "" });
+    } catch (err) {
+      const msg = err?.message || "Грешка при смяна на паролата.";
+      if (msg.toLowerCase().includes("invalid login credentials")) {
+        setPwError("Текущата парола е грешна.");
+      } else {
+        setPwError(msg);
+      }
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+const goBack = () => setPage?.("home");
 
   if (loading) {
     return (
@@ -276,7 +332,9 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         <div className={styles.shell}>
           <div className={styles.topBar}>
             <h2 className={styles.title}>Моят профил</h2>
-            <button className={styles.backBtn} onClick={goBack}>Назад</button>
+            <button className={styles.backBtn} onClick={goBack}>
+              Назад
+            </button>
           </div>
           <div className={styles.card}>
             <div className={styles.loader}>
@@ -295,7 +353,9 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         <div className={styles.shell}>
           <div className={styles.topBar}>
             <h2 className={styles.title}>Моят профил</h2>
-            <button className={styles.backBtn} onClick={goBack}>Назад</button>
+            <button className={styles.backBtn} onClick={goBack}>
+              Назад
+            </button>
           </div>
 
           <div className={styles.card}>
@@ -316,9 +376,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         <div className={styles.topBar}>
           <div>
             <h2 className={styles.title}>Моят профил</h2>
-            <p className={styles.subtitle}>
-              Актуализирай данните си и следи целите си по-лесно.
-            </p>
+            <p className={styles.subtitle}>Актуализирай данните си и следи целите си по-лесно.</p>
           </div>
 
           <button className={styles.backBtn} onClick={goBack}>
@@ -389,12 +447,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
 
             <div className={styles.field}>
               <label className={styles.label}>Имейл</label>
-              <input
-                type="email"
-                value={userRow?.email ?? ""}
-                disabled
-                className={styles.input}
-              />
+              <input type="email" value={userRow?.email ?? ""} disabled className={styles.input} />
             </div>
 
             <div className={styles.field}>
@@ -481,6 +534,84 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
               )}
             </div>
           </div>
+
+          {/* ✅ CHANGE PASSWORD (Variant A) */}
+          <div className={styles.sectionDivider} />
+
+          <div className={styles.pwTitle}>Смяна на парола</div>
+          <div className={styles.pwSubtitle}>
+            За сигурност въведи текущата си парола, след това новата.
+          </div>
+
+          {pwError ? (
+            <div className={styles.errorInline} role="alert">
+              {pwError}
+            </div>
+          ) : null}
+
+          {pwSuccess ? (
+            <div className={styles.successInline} role="status">
+              {pwSuccess}
+            </div>
+          ) : null}
+
+          <form onSubmit={handleChangePassword}>
+            <div className={styles.statsGrid}>
+              <div className={styles.field}>
+                <label className={styles.label}>Текуща парола</label>
+                <input
+                  type="password"
+                  value={pw.current}
+                  onChange={(e) => setPw((p) => ({ ...p, current: e.target.value }))}
+                  className={styles.input}
+                  placeholder="Въведи текущата парола"
+                  autoComplete="current-password"
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>Нова парола</label>
+                <input
+                  type="password"
+                  value={pw.next}
+                  onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}
+                  className={styles.input}
+                  placeholder="Нова парола (мин. 6 символа)"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>Потвърди новата парола</label>
+                <input
+                  type="password"
+                  value={pw.confirm}
+                  onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))}
+                  className={styles.input}
+                  placeholder="Повтори новата парола"
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+
+            <div className={styles.actions}>
+              <button className={`${styles.btn} ${styles.btnPrimary}`} type="submit" disabled={pwSaving}>
+                {pwSaving ? "Запазване..." : "Запази новата парола"}
+              </button>
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                type="button"
+                onClick={() => {
+                  setPw({ current: "", next: "", confirm: "" });
+                  setPwError("");
+                  setPwSuccess("");
+                }}
+                disabled={pwSaving}
+              >
+                Изчисти
+              </button>
+            </div>
+          </form>
 
           {/* small help */}
           <div className={styles.note}>

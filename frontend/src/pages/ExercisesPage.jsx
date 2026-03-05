@@ -16,6 +16,29 @@ function toYouTubeEmbed(url = "") {
 
 const MAX_VISIBLE = 12;
 
+function bgMuscle(m = "") {
+  const v = (m || "").toLowerCase().trim();
+  const map = {
+    abdominals: "корем",
+    chest: "гърди",
+    shoulders: "рамо",
+    biceps: "бицепс",
+    triceps: "трицепс",
+    lats: "гръб",
+    "middle back": "гръб",
+    "lower back": "кръст",
+    quadriceps: "крака",
+    hamstrings: "задно бедро",
+    glutes: "седалище",
+    calves: "прасци",
+    adductors: "аддуктори",
+    abductors: "абдуктори",
+    traps: "трапец",
+    forearms: "предмишници",
+  };
+  return map[v] || m || "—";
+}
+
 export default function ExercisesPage() {
   const [exercises, setExercises] = useState([]);
 
@@ -47,7 +70,6 @@ export default function ExercisesPage() {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
 
       setExercises(data ?? []);
@@ -64,9 +86,25 @@ export default function ExercisesPage() {
     loadExercises();
   }, [loadExercises]);
 
-  const visibleExercises = useMemo(() => {
-    return exercises.slice(0, MAX_VISIBLE);
-  }, [exercises]);
+  // ESC to close modal + lock scroll
+  useEffect(() => {
+    if (!selected) return;
+
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setSelected(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [selected]);
+
+  const visibleExercises = useMemo(() => exercises.slice(0, MAX_VISIBLE), [exercises]);
 
   return (
     <div className={styles.page}>
@@ -77,136 +115,118 @@ export default function ExercisesPage() {
           {/* Filters */}
           <div className={styles.filterSection}>
             <input
-              placeholder="Филтър по име (напр. лежанка, клек)"
+              placeholder="Търси по име (напр. лежанка, клек...)"
               value={nameFilter}
               onChange={(e) => setNameFilter(e.target.value)}
               className={styles.filterInput}
             />
 
             <input
-              placeholder="Филтър по мускул (напр. гърди, крака)"
+              placeholder="Търси по мускул (напр. гърди, крака...)"
               value={muscleFilter}
               onChange={(e) => setMuscleFilter(e.target.value)}
               className={styles.filterInput}
             />
 
-            <button
-              type="button"
-              onClick={loadExercises}
-              className={styles.applyButton}
-              disabled={loading}
-            >
-              Приложи филтъра
+            <button type="button" onClick={loadExercises} className={styles.applyButton} disabled={loading}>
+              {loading ? "Зареждане…" : "Приложи"}
             </button>
           </div>
 
           {pageError && <div className={styles.error}>{pageError}</div>}
-
           {loading && <div className={styles.loading}>Зареждане на упражнения…</div>}
 
-          {!loading && exercises.length === 0 && (
-            <div className={styles.emptyState}>Няма намерени упражнения.</div>
-          )}
+          {!loading && exercises.length === 0 && <div className={styles.emptyState}>Няма намерени упражнения.</div>}
 
           {/* Exercises list */}
           <ul className={styles.exerciseList}>
             {visibleExercises.map((ex) => (
-              <li
-                key={ex.id}
-                className={styles.exerciseItem}
-                onClick={() => setSelected(ex)}
-              >
+              <li key={ex.id} className={styles.exerciseItem} onClick={() => setSelected(ex)}>
                 <div className={styles.exerciseTop}>
                   <div>
                     <div className={styles.exerciseName}>{ex.name}</div>
-                    <div className={styles.exerciseMuscle}>{ex.muscle_group}</div>
+                    <div className={styles.exerciseMuscle}>{bgMuscle(ex.muscle_group)}</div>
                   </div>
-
                   <div className={styles.openHint}>Детайли ▸</div>
                 </div>
 
-                {ex.image_url && (
-                  <img
-                    src={ex.image_url}
-                    alt={ex.name}
-                    className={styles.exerciseImg}
-                  />
-                )}
+                {ex.image_url && <img src={ex.image_url} alt={ex.name} className={styles.exerciseImg} />}
 
-                {ex.description && (
-                  <div className={styles.exerciseDescription}>{ex.description}</div>
-                )}
+                {ex.description && <div className={styles.exerciseDescription}>{ex.description}</div>}
               </li>
             ))}
           </ul>
         </div>
       </div>
 
-      {/* MODAL DARK VERSION */}
+      {/* ✅ MODAL (fixed layout) */}
       {selected && (
-        <div onClick={() => setSelected(null)} className={styles.modalOverlay}>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={styles.modalCard}
-          >
+        <div className={styles.modalOverlay} onClick={() => setSelected(null)} role="dialog" aria-modal="true">
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             {/* header */}
             <div className={styles.modalHeader}>
-              <div>
+              <div className={styles.modalHeaderLeft}>
                 <h2 className={styles.modalTitle}>{selected.name}</h2>
-                <div className={styles.modalMuscle}>
-                  {selected.muscle_group || "—"}
+                <div className={styles.modalPills}>
+                  <span className={styles.pill}>{bgMuscle(selected.muscle_group)}</span>
+                  <span className={styles.pill}>
+                    {selected.video_url ? (isYouTube(selected.video_url) ? "Видео: YouTube" : "Видео: линк") : "Няма видео"}
+                  </span>
                 </div>
               </div>
 
-              <button
-                onClick={() => setSelected(null)}
-                className={styles.modalClose}
-                aria-label="Затвори"
-              >
+              <button onClick={() => setSelected(null)} className={styles.modalClose} aria-label="Затвори">
                 ✕
               </button>
             </div>
 
-            {/* content */}
-            <div className={styles.modalContent}>
-              {/* image */}
-              <div className={styles.modalImageBox}>
-                {selected.image_url ? (
-                  <img
-                    src={selected.image_url}
-                    alt={selected.name}
-                    className={styles.modalImage}
-                  />
-                ) : (
-                  <div className={styles.modalPlaceholder}>Няма изображение</div>
-                )}
-              </div>
+            {/* body */}
+            <div className={styles.modalBody}>
+              <div className={styles.modalGrid}>
+                {/* left: media */}
+                <div className={styles.mediaCol}>
+                  <div className={styles.mediaCard}>
+                    {selected.image_url ? (
+                      <img src={selected.image_url} alt={selected.name} className={styles.modalImage} />
+                    ) : (
+                      <div className={styles.modalPlaceholder}>Няма изображение</div>
+                    )}
+                  </div>
 
-              {/* video */}
-              <div className={styles.modalVideoBox}>
-                {selected.video_url ? (
-                  isYouTube(selected.video_url) ? (
-                    <iframe
-                      title="exercise-video"
-                      src={toYouTubeEmbed(selected.video_url)}
-                      className={styles.modalVideo}
-                      allowFullScreen
-                    />
-                  ) : (
-                    <div className={styles.modalPlaceholder}>
-                      Невалиден видео линк
+                  <div className={styles.mediaCard}>
+                    {selected.video_url ? (
+                      isYouTube(selected.video_url) ? (
+                        <iframe
+                          title="exercise-video"
+                          src={toYouTubeEmbed(selected.video_url)}
+                          className={styles.modalVideo}
+                          allowFullScreen
+                        />
+                      ) : (
+                        <div className={styles.modalPlaceholder}>Невалиден видео линк</div>
+                      )
+                    ) : (
+                      <div className={styles.modalPlaceholder}>Няма видео</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* right: description */}
+                <div className={styles.infoCol}>
+                  <div className={styles.infoCard}>
+                    <div className={styles.infoTitle}>Описание</div>
+                    <div className={styles.modalText}>
+                      {selected.description ? selected.description : "Няма описание."}
                     </div>
-                  )
-                ) : (
-                  <div className={styles.modalPlaceholder}>Няма видео</div>
-                )}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* description */}
-            <div className={styles.modalDescription}>
-              <h3>Описание</h3>
-              <div>{selected.description || "Няма описание."}</div>
+              <div className={styles.modalFooter}>
+                <button className={styles.modalOk} onClick={() => setSelected(null)}>
+                  Готово
+                </button>
+              </div>
             </div>
           </div>
         </div>

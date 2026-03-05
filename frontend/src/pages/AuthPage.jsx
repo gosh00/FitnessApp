@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./AuthPage.module.css";
 import { supabase } from "../supabaseClient";
 
 const AuthPage = ({ onLogin, setPage }) => {
-  const [activeTab, setActiveTab] = useState("login");
+  const [activeTab, setActiveTab] = useState("login"); // login | register | forgot
   const [showPassword, setShowPassword] = useState(false);
 
   const [errors, setErrors] = useState({});
@@ -12,6 +12,10 @@ const AuthPage = ({ onLogin, setPage }) => {
   const [submitting, setSubmitting] = useState(false);
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [forgotEmail, setForgotEmail] = useState("");
+
+  // ✅ cooldown for forgot password (prevents 429 spam)
+  const [resetCooldown, setResetCooldown] = useState(0);
 
   const [registerData, setRegisterData] = useState({
     email: "",
@@ -26,6 +30,13 @@ const AuthPage = ({ onLogin, setPage }) => {
     height: "",
     goal: "Maintain Weight",
   });
+
+  // ✅ countdown timer
+  useEffect(() => {
+    if (!resetCooldown) return;
+    const t = setInterval(() => setResetCooldown((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resetCooldown]);
 
   const resetMessages = () => {
     setErrors({});
@@ -86,7 +97,17 @@ const AuthPage = ({ onLogin, setPage }) => {
     return newErrors;
   };
 
-  // ✅ REGISTER -> signUp + metadata (NO insert into Users here)
+  const validateForgot = () => {
+    const newErrors = {};
+    const email = forgotEmail.trim();
+
+    if (!email) newErrors.email = "Имейлът е задължителен";
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Невалиден имейл адрес";
+
+    return newErrors;
+  };
+
+  // ✅ REGISTER -> signUp + metadata
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     resetMessages();
@@ -129,7 +150,7 @@ const AuthPage = ({ onLogin, setPage }) => {
     }
   };
 
-  // ✅ LOGIN -> upsert to Users using auth metadata
+  // ✅ LOGIN
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     resetMessages();
@@ -149,7 +170,6 @@ const AuthPage = ({ onLogin, setPage }) => {
       });
       if (error) throw error;
 
-      // ✅ get "fresh" user with metadata
       const { data: fresh, error: freshErr } = await supabase.auth.getUser();
       if (freshErr) throw freshErr;
 
@@ -183,6 +203,52 @@ const AuthPage = ({ onLogin, setPage }) => {
       const msg = err?.message || "Входът е неуспешен.";
       if (msg.toLowerCase().includes("email not confirmed")) {
         setFormError("Имейлът не е потвърден. Провери пощата си и натисни линка за потвърждение.");
+      } else {
+        setFormError(msg);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ✅ FORGOT PASSWORD -> send reset email (with cooldown + 429 handling)
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+
+    // ✅ prevent spam clicks
+    if (resetCooldown > 0) return;
+
+    resetMessages();
+    setSuccess("");
+
+    const newErrors = validateForgot();
+    if (Object.keys(newErrors).length) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        forgotEmail.trim().toLowerCase(),
+        {
+          redirectTo: window.location.origin,
+        }
+      );
+
+      if (error) throw error;
+
+      setSuccess("✅ Изпратихме ти имейл за смяна на парола. Провери и Spam.");
+      setResetCooldown(60); // ✅ lock for 60 seconds
+      setActiveTab("login");
+      setForgotEmail("");
+    } catch (err) {
+      const msg = err?.message || "Неуспешно изпращане на имейл за смяна на парола.";
+
+      // ✅ rate limit friendly message
+      if (msg.toLowerCase().includes("rate limit") || msg.includes("429")) {
+        setFormError("Прекалено много заявки. Опитай отново след малко.");
+        setResetCooldown(90);
       } else {
         setFormError(msg);
       }
@@ -310,10 +376,65 @@ const AuthPage = ({ onLogin, setPage }) => {
               {submitting ? "Влизане..." : "Вход"}
             </button>
 
+            <div className={styles.formSwitch} style={{ justifyContent: "space-between" }}>
+              <span>
+                Нямаш профил?{" "}
+                <span className={styles.switchLink} onClick={() => setActiveTab("register")}>
+                  Регистрирай се!
+                </span>
+              </span>
+
+              <span
+                className={styles.switchLink}
+                onClick={() => {
+                  setActiveTab("forgot");
+                  setSuccess("");
+                  resetMessages();
+                  setForgotEmail((loginData.email || "").trim());
+                }}
+                style={{ opacity: resetCooldown > 0 ? 0.6 : 1, pointerEvents: "auto" }}
+              >
+                {resetCooldown > 0 ? `Опитай пак след ${resetCooldown}s` : "Забравена парола?"}
+              </span>
+            </div>
+          </form>
+
+          {/* FORGOT PASSWORD */}
+          <form
+            className={`${styles.form} ${activeTab === "forgot" ? styles.formActive : ""}`}
+            onSubmit={handleForgotSubmit}
+          >
+            <h2 className={styles.formTitle}>Забравена парола</h2>
+
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Имейл</label>
+              <input
+                type="email"
+                className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
+                placeholder="your.email@example.com"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+              />
+              {errors.email && <span className={styles.error}>{errors.email}</span>}
+            </div>
+
+            <button
+              type="submit"
+              className={styles.submitBtn}
+              disabled={submitting || resetCooldown > 0}
+              title={resetCooldown > 0 ? "Изчакай малко преди да изпратиш отново" : ""}
+            >
+              {submitting
+                ? "Изпращане..."
+                : resetCooldown > 0
+                ? `Изпрати пак след ${resetCooldown}s`
+                : "Изпрати линк за смяна"}
+            </button>
+
             <div className={styles.formSwitch}>
-              Нямаш профил?
-              <span className={styles.switchLink} onClick={() => setActiveTab("register")}>
-                Регистрирай се
+              Спомни си паролата?{" "}
+              <span className={styles.switchLink} onClick={() => setActiveTab("login")}>
+                Вход
               </span>
             </div>
           </form>
@@ -381,7 +502,6 @@ const AuthPage = ({ onLogin, setPage }) => {
               {errors.username && <span className={styles.error}>{errors.username}</span>}
             </div>
 
-            {/* Gender dropdown */}
             <div className={styles.formGroup}>
               <label className={styles.label}>Пол</label>
               <select
