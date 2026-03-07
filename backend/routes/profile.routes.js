@@ -3,8 +3,8 @@ const router = express.Router();
 const supabase = require("../config/supabaseClient");
 const upload = require("../middleware/upload");
 
-// POST /api/profile/ensure
-router.post("/profile/ensure", async (req, res) => {
+// POST /api/users/ensure
+router.post("/users/ensure", async (req, res) => {
   try {
     const { auth_id, email } = req.body;
 
@@ -70,13 +70,13 @@ router.post("/profile/ensure", async (req, res) => {
     if (err4) return res.status(500).json({ error: err4.message });
     return res.json(inserted);
   } catch (e) {
-    console.error("/api/profile/ensure error:", e);
+    console.error("/api/users/ensure error:", e);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-// POST /api/profile/update
-router.post("/profile/update", async (req, res) => {
+// POST /api/users/update
+router.post("/users/update", async (req, res) => {
   try {
     const { user_id, display_name, bio, age, weight, height, goal } = req.body;
 
@@ -98,13 +98,13 @@ router.post("/profile/update", async (req, res) => {
 
     res.json(data);
   } catch (e) {
-    console.error("/api/profile/update error:", e);
+    console.error("/api/users/update error:", e);
     res.status(500).json({ error: e?.message || "Server error" });
   }
 });
 
-// POST /api/profile/avatar
-router.post("/profile/avatar", upload.single("avatar"), async (req, res) => {
+// POST /api/users/avatar
+router.post("/users/avatar", upload.single("avatar"), async (req, res) => {
   try {
     const { auth_id, user_id } = req.body;
 
@@ -115,7 +115,6 @@ router.post("/profile/avatar", upload.single("avatar"), async (req, res) => {
       return res.status(400).json({ error: "avatar file is required" });
     }
 
-    // ownership check
     const { data: existing, error: selErr } = await supabase
       .from("Users")
       .select("id, auth_id")
@@ -136,7 +135,6 @@ router.post("/profile/avatar", upload.single("avatar"), async (req, res) => {
     const bucket = "avatars";
     const filePath = `${auth_id}/avatar.png`;
 
-    // Try replace first
     let { error: upErr } = await supabase.storage
       .from(bucket)
       .update(filePath, file.buffer, {
@@ -158,6 +156,7 @@ router.post("/profile/avatar", upload.single("avatar"), async (req, res) => {
             cacheControl: "0",
             upsert: true,
           });
+
         if (uploadErr) return res.status(500).json({ error: uploadErr.message });
       } else {
         return res.status(500).json({ error: upErr.message });
@@ -166,7 +165,10 @@ router.post("/profile/avatar", upload.single("avatar"), async (req, res) => {
 
     const { data: pub } = supabase.storage.from(bucket).getPublicUrl(filePath);
     const publicUrl = pub?.publicUrl;
-    if (!publicUrl) return res.status(500).json({ error: "Failed to get public URL" });
+
+    if (!publicUrl) {
+      return res.status(500).json({ error: "Failed to get public URL" });
+    }
 
     const { data: updated, error: updErr } = await supabase
       .from("Users")

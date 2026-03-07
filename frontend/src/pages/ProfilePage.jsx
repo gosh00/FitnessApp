@@ -20,7 +20,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
 
   const [authId, setAuthId] = useState(null);
   const [userRow, setUserRow] = useState(null);
-  
+
   const [avatarUrl, setAvatarUrl] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -31,13 +31,11 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
   const [height, setHeight] = useState("");
   const [goal, setGoal] = useState("Maintain Weight");
 
-  // ✅ Change password (Variant A)
+  // ✅ Change password
   const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
   const [pwSaving, setPwSaving] = useState(false);
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState("");
-
-    
 
   // cache-bust for avatar
   const bust = (url) => {
@@ -53,8 +51,6 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
 
   useEffect(() => {
     let isMounted = true;
-
-    const resolveAvatar = (rowAvatarUrl) => bust(rowAvatarUrl || DEFAULT_AVATAR);
 
     const loadProfile = async () => {
       setLoading(true);
@@ -76,8 +72,8 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         if (!isMounted) return;
         setAuthId(_authId);
 
-        // ✅ Ensure Users row exists via backend (service role)
-        const res = await api.post("/profile/ensure", { auth_id: _authId, email });
+        // ✅ Ensure Users row exists via backend
+        const res = await api.post("/users/ensure", { auth_id: _authId, email });
         const row = res.data;
 
         if (!row?.id) throw new Error("Неуспешно зареждане на профила.");
@@ -85,7 +81,6 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         if (!isMounted) return;
 
         setUserRow(row);
-
         setDisplayName(row.display_name ?? "");
         setBio(row.bio ?? "");
         setAge(row.age ?? "");
@@ -102,6 +97,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
           err?.response?.data?.error ||
           err?.message ||
           "Възникна грешка при зареждане на профила.";
+
         if (isMounted) setPageError(msg);
       } finally {
         if (isMounted) setLoading(false);
@@ -109,6 +105,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     };
 
     loadProfile();
+
     return () => {
       isMounted = false;
     };
@@ -133,7 +130,6 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     setGoal(validGoal);
 
     setAvatarUrl(resolveAvatar(userRow.avatar_url));
-
     setEditing(false);
     setPageError("");
   };
@@ -146,15 +142,19 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     if (ageNum !== null && (!Number.isFinite(ageNum) || ageNum < 0 || ageNum > 120)) {
       return "Възрастта трябва да е между 0 и 120.";
     }
+
     if (heightNum !== null && (!Number.isFinite(heightNum) || heightNum < 50 || heightNum > 250)) {
       return "Ръстът трябва да е между 50 и 250 см.";
     }
+
     if (weightNum !== null && (!Number.isFinite(weightNum) || weightNum < 20 || weightNum > 400)) {
       return "Теглото трябва да е между 20 и 400 кг.";
     }
+
     if (!GOAL_OPTIONS.some((g) => g.value === goal)) {
       return "Избраната цел е невалидна.";
     }
+
     return "";
   };
 
@@ -174,21 +174,20 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     const heightNum = height === "" ? null : Number(height);
 
     try {
-      const res = await api.post("/profile/update", {
+      const res = await api.post("/users/update", {
         user_id: userRow.id,
         display_name: displayName.trim(),
         bio: bio.trim(),
         age: ageNum,
         weight: weightNum,
         height: heightNum,
-        goal, // ✅ keep DB value (EN)
+        goal,
       });
 
       const updated = res.data;
       if (!updated?.id) throw new Error("Записът на профила не върна данни.");
 
       setUserRow(updated);
-
       setDisplayName(updated.display_name ?? "");
       setBio(updated.bio ?? "");
       setAge(updated.age ?? "");
@@ -200,12 +199,10 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       setGoal(validGoal);
 
       setAvatarUrl(resolveAvatar(updated.avatar_url));
-
       setEditing(false);
 
       // ✅ refresh header instantly
       window.dispatchEvent(new Event("profile_saved"));
-
       onUpdateProfile?.(currentUser);
 
       alert("Профилът е обновен успешно!");
@@ -255,7 +252,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       form.append("auth_id", authId);
       form.append("user_id", userRow.id);
 
-      const res = await api.post("/profile/avatar", form, {
+      const res = await api.post("/users/avatar", form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -275,7 +272,6 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     }
   };
 
-  // ✅ Change password (Variant A)
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setPwError("");
@@ -299,14 +295,12 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       const email = authRes?.user?.email;
       if (!email) throw new Error("Липсва имейл на потребителя.");
 
-      // ✅ Re-authenticate with current password
       const { error: reauthErr } = await supabase.auth.signInWithPassword({
         email,
         password: current,
       });
       if (reauthErr) throw reauthErr;
 
-      // ✅ Update password
       const { error: updErr } = await supabase.auth.updateUser({ password: next });
       if (updErr) throw updErr;
 
@@ -314,6 +308,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       setPw({ current: "", next: "", confirm: "" });
     } catch (err) {
       const msg = err?.message || "Грешка при смяна на паролата.";
+
       if (msg.toLowerCase().includes("invalid login credentials")) {
         setPwError("Текущата парола е грешна.");
       } else {
@@ -324,7 +319,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     }
   };
 
-const goBack = () => setPage?.("home");
+  const goBack = () => setPage?.("home");
 
   if (loading) {
     return (
@@ -372,11 +367,12 @@ const goBack = () => setPage?.("home");
   return (
     <div className={styles.page}>
       <div className={styles.shell}>
-        {/* TOP BAR */}
         <div className={styles.topBar}>
           <div>
             <h2 className={styles.title}>Моят профил</h2>
-            <p className={styles.subtitle}>Актуализирай данните си и следи целите си по-лесно.</p>
+            <p className={styles.subtitle}>
+              Актуализирай данните си и следи целите си по-лесно.
+            </p>
           </div>
 
           <button className={styles.backBtn} onClick={goBack}>
@@ -384,7 +380,6 @@ const goBack = () => setPage?.("home");
           </button>
         </div>
 
-        {/* CARD */}
         <div className={styles.card}>
           {pageError ? (
             <div className={styles.errorInline} role="alert">
@@ -392,7 +387,6 @@ const goBack = () => setPage?.("home");
             </div>
           ) : null}
 
-          {/* AVATAR */}
           <div className={styles.avatarRow}>
             <div className={styles.avatarWrap}>
               <img
@@ -431,7 +425,6 @@ const goBack = () => setPage?.("home");
             </label>
           </div>
 
-          {/* FORM GRID */}
           <div className={styles.grid}>
             <div className={styles.field}>
               <label className={styles.label}>Потребителско име</label>
@@ -516,7 +509,6 @@ const goBack = () => setPage?.("home");
               </div>
             </div>
 
-            {/* ACTIONS */}
             <div className={styles.actions}>
               {!editing ? (
                 <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleEdit}>
@@ -535,7 +527,6 @@ const goBack = () => setPage?.("home");
             </div>
           </div>
 
-          {/* ✅ CHANGE PASSWORD (Variant A) */}
           <div className={styles.sectionDivider} />
 
           <div className={styles.pwTitle}>Смяна на парола</div>
@@ -595,9 +586,14 @@ const goBack = () => setPage?.("home");
             </div>
 
             <div className={styles.actions}>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} type="submit" disabled={pwSaving}>
+              <button
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                type="submit"
+                disabled={pwSaving}
+              >
                 {pwSaving ? "Запазване..." : "Запази новата парола"}
               </button>
+
               <button
                 className={`${styles.btn} ${styles.btnSecondary}`}
                 type="button"
@@ -613,7 +609,6 @@ const goBack = () => setPage?.("home");
             </div>
           </form>
 
-          {/* small help */}
           <div className={styles.note}>
             💡 Съвет: за най-точни калорийни изчисления, поддържай актуални ръст и тегло.
           </div>
