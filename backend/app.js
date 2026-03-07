@@ -25,7 +25,7 @@ app.use(
 app.use(express.json());
 
 app.get("/api/debug-routes", (req, res) => {
-  res.json({ ok: true, message: "API is alive" });
+  res.json({ ok: true, message: "API is alive from backend/app.js" });
 });
 
 app.use("/api", healthRoutes);
