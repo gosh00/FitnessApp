@@ -73,7 +73,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
         setAuthId(_authId);
 
         // ✅ Ensure Users row exists via backend
-        const res = await api.post("/users/ensure", { auth_id: _authId, email });
+        const res = await api.post("/profile/ensure", { auth_id: _authId, email });
         const row = res.data;
 
         if (!row?.id) throw new Error("Неуспешно зареждане на профила.");
@@ -174,7 +174,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
     const heightNum = height === "" ? null : Number(height);
 
     try {
-      const res = await api.post("/users/update", {
+      const res = await api.post("/profile/update", {
         user_id: userRow.id,
         display_name: displayName.trim(),
         bio: bio.trim(),
@@ -252,7 +252,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
       form.append("auth_id", authId);
       form.append("user_id", userRow.id);
 
-      const res = await api.post("/users/avatar", form, {
+      const res = await api.post("/profile/avatar", form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
