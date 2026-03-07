@@ -11,7 +11,6 @@ const profileRoutes = require("./routes/profile.routes");
 
 const app = express();
 
-// middlewares
 app.use(
   cors({
     origin: [
@@ -22,9 +21,9 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
 
-// routes
 app.use("/api", healthRoutes);
 app.use("/api", exercisesRoutes);
 app.use("/api", logsRoutes);
