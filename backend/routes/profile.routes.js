@@ -3,7 +3,7 @@ const router = express.Router();
 const supabase = require("../config/supabaseClient");
 const upload = require("../middleware/upload");
 
-router.post("/users/ensure", async (req, res) => {
+router.post("/profile/ensure", async (req, res) => {
   try {
     const { auth_id, email } = req.body;
 
@@ -58,12 +58,12 @@ router.post("/users/ensure", async (req, res) => {
     if (err4) return res.status(500).json({ error: err4.message });
     return res.json(inserted);
   } catch (e) {
-    console.error("/api/users/ensure error:", e);
+    console.error("/api/profile/ensure error:", e);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-router.post("/users/update", async (req, res) => {
+router.post("/profile/update", async (req, res) => {
   try {
     const { user_id, display_name, bio, age, weight, height, goal } = req.body;
 
@@ -83,12 +83,12 @@ router.post("/users/update", async (req, res) => {
 
     res.json(data);
   } catch (e) {
-    console.error("/api/users/update error:", e);
+    console.error("/api/profile/update error:", e);
     res.status(500).json({ error: e?.message || "Server error" });
   }
 });
 
-router.post("/users/avatar", upload.single("avatar"), async (req, res) => {
+router.post("/profile/avatar", upload.single("avatar"), async (req, res) => {
   try {
     const { auth_id, user_id } = req.body;
 
