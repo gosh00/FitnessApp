@@ -3,7 +3,6 @@ const router = express.Router();
 const supabase = require("../config/supabaseClient");
 const upload = require("../middleware/upload");
 
-// POST /api/users/ensure
 router.post("/users/ensure", async (req, res) => {
   try {
     const { auth_id, email } = req.body;
@@ -12,24 +11,18 @@ router.post("/users/ensure", async (req, res) => {
       return res.status(400).json({ error: "auth_id and email are required" });
     }
 
-    // 1) by auth_id
     let { data: row, error: err1 } = await supabase
       .from("Users")
-      .select(
-        "id, email, display_name, bio, age, weight, height, goal, auth_id, avatar_url"
-      )
+      .select("id, email, display_name, bio, age, weight, height, goal, auth_id, avatar_url")
       .eq("auth_id", auth_id)
       .maybeSingle();
 
     if (err1) return res.status(500).json({ error: err1.message });
     if (row) return res.json(row);
 
-    // 2) by email -> attach auth_id
     const { data: byEmail, error: err2 } = await supabase
       .from("Users")
-      .select(
-        "id, email, display_name, bio, age, weight, height, goal, auth_id, avatar_url"
-      )
+      .select("id, email, display_name, bio, age, weight, height, goal, auth_id, avatar_url")
       .eq("email", email)
       .maybeSingle();
 
@@ -40,16 +33,13 @@ router.post("/users/ensure", async (req, res) => {
         .from("Users")
         .update({ auth_id })
         .eq("id", byEmail.id)
-        .select(
-          "id, email, display_name, bio, age, weight, height, goal, auth_id, avatar_url"
-        )
+        .select("id, email, display_name, bio, age, weight, height, goal, auth_id, avatar_url")
         .single();
 
       if (err3) return res.status(500).json({ error: err3.message });
       return res.json(attached);
     }
 
-    // 3) create
     const defaultName = email.split("@")[0] || "User";
     const avatar_url = `https://api.dicebear.com/9.x/identicon/svg?seed=${auth_id}`;
 
@@ -62,9 +52,7 @@ router.post("/users/ensure", async (req, res) => {
         goal: "Maintain Weight",
         avatar_url,
       })
-      .select(
-        "id, email, display_name, bio, age, weight, height, goal, auth_id, avatar_url"
-      )
+      .select("id, email, display_name, bio, age, weight, height, goal, auth_id, avatar_url")
       .single();
 
     if (err4) return res.status(500).json({ error: err4.message });
@@ -75,7 +63,6 @@ router.post("/users/ensure", async (req, res) => {
   }
 });
 
-// POST /api/users/update
 router.post("/users/update", async (req, res) => {
   try {
     const { user_id, display_name, bio, age, weight, height, goal } = req.body;
@@ -89,9 +76,7 @@ router.post("/users/update", async (req, res) => {
       .from("Users")
       .update(payload)
       .eq("id", user_id)
-      .select(
-        "id, email, display_name, bio, age, weight, height, goal, auth_id, avatar_url"
-      )
+      .select("id, email, display_name, bio, age, weight, height, goal, auth_id, avatar_url")
       .single();
 
     if (error) return res.status(500).json({ error: error.message });
@@ -103,7 +88,6 @@ router.post("/users/update", async (req, res) => {
   }
 });
 
-// POST /api/users/avatar
 router.post("/users/avatar", upload.single("avatar"), async (req, res) => {
   try {
     const { auth_id, user_id } = req.body;
@@ -165,10 +149,7 @@ router.post("/users/avatar", upload.single("avatar"), async (req, res) => {
 
     const { data: pub } = supabase.storage.from(bucket).getPublicUrl(filePath);
     const publicUrl = pub?.publicUrl;
-
-    if (!publicUrl) {
-      return res.status(500).json({ error: "Failed to get public URL" });
-    }
+    if (!publicUrl) return res.status(500).json({ error: "Failed to get public URL" });
 
     const { data: updated, error: updErr } = await supabase
       .from("Users")

@@ -24,6 +24,10 @@ app.use(
 
 app.use(express.json());
 
+app.get("/api/debug-routes", (req, res) => {
+  res.json({ ok: true, message: "API is alive" });
+});
+
 app.use("/api", healthRoutes);
 app.use("/api", exercisesRoutes);
 app.use("/api", logsRoutes);
