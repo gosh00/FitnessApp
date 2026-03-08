@@ -2,6 +2,75 @@ import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import styles from "./HomePage.module.css";
 
+function getLocalDateKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+// ✅ Streak: 0 if no workout today, otherwise count back consecutive days
+function calcStreakDaysFromLogs(logs) {
+  const days = new Set(logs.map((l) => l.date).filter(Boolean));
+  const todayKey = getLocalDateKey();
+
+  if (!days.has(todayKey)) return 0;
+
+  let streak = 0;
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+
+  while (true) {
+    const key = getLocalDateKey(d);
+    if (days.has(key)) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else break;
+  }
+
+  return streak;
+}
+
+// ✅ Weekly activity: counts unique days per weekday slot (Пн=0 ... Нд=6)
+// Uses the current Mon–Sun week only, based on local date strings
+function calculateWeeklyActivity(logs) {
+  const activity = [0, 0, 0, 0, 0, 0, 0]; // Mon=0 ... Sun=6
+
+  // Find Monday of current week
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const dow = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const diffToMonday = dow === 0 ? -6 : 1 - dow;
+
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday);
+
+  // Build a set of (dateKey → weekday index) for this week
+  const weekMap = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    weekMap[getLocalDateKey(d)] = i;
+  }
+
+  // Count unique exercises per day (not per log row)
+  // Group by date first to avoid double-counting multiple sets on same day
+  const dayCounts = {};
+  logs.forEach((log) => {
+    const key = log.date;
+    if (key && weekMap[key] !== undefined) {
+      dayCounts[key] = (dayCounts[key] || 0) + 1;
+    }
+  });
+
+  Object.entries(dayCounts).forEach(([key, count]) => {
+    const idx = weekMap[key];
+    if (idx !== undefined) activity[idx] = count;
+  });
+
+  return activity;
+}
+
 const HomePage = ({ currentUser, setPage }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -89,9 +158,7 @@ const HomePage = ({ currentUser, setPage }) => {
     };
 
     loadStats();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [currentUser]);
 
   if (loading) {
@@ -323,36 +390,5 @@ const HomePage = ({ currentUser, setPage }) => {
     </div>
   );
 };
-
-function calcStreakDaysFromLogs(logs) {
-  const days = new Set(logs.map((l) => l.date).filter(Boolean));
-  let streak = 0;
-  for (let i = 0; ; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    if (days.has(key)) streak++;
-    else break;
-  }
-  return streak;
-}
-
-function calculateWeeklyActivity(logs) {
-  const activity = [0, 0, 0, 0, 0, 0, 0];
-  const today = new Date();
-  const dayOfWeek = today.getDay();
-  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-
-  logs.forEach((log) => {
-    const logDate = new Date(log.date);
-    const diffDays = Math.floor((today - logDate) / (1000 * 60 * 60 * 24));
-    const weekDay = diffDays - mondayOffset;
-    if (weekDay >= 0 && weekDay < 7) {
-      activity[weekDay]++;
-    }
-  });
-
-  return activity;
-}
 
 export default HomePage;
