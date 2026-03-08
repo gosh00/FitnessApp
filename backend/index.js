@@ -1,12 +1,4 @@
 // backend/index.js
-const cors = require('cors');
-
-app.use(cors({
-  origin: 'https://trainify-frontend.onrender.com',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
