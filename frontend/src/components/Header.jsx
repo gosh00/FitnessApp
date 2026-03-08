@@ -11,17 +11,49 @@ function withBust(url, token) {
   return `${url}${sep}t=${token}`;
 }
 
+function getLocalDateKey() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function calcStreakDaysFromLogs(logs) {
+  const days = new Set((logs || []).map((l) => l?.date).filter(Boolean));
+  const todayKey = getLocalDateKey();
+
+  // ✅ If no log for today → streak is 0
+  if (!days.has(todayKey)) return 0;
+
+  let streak = 0;
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+
+  while (true) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const key = `${y}-${m}-${day}`;
+
+    if (days.has(key)) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else break;
+  }
+
+  return streak;
+}
+
 const Header = ({ setPage, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-  // ✅ changes when avatar/profile is updated → forces new avatar URL
   const [avatarVersion, setAvatarVersion] = useState(() => Date.now());
 
   const [userStats, setUserStats] = useState({
     displayName: "Потребител",
-    avatarUrl: null, // raw base URL (no cache bust here)
+    avatarUrl: null,
     streak: 0,
     level: 1,
     levelProgressPct: 0,
@@ -35,6 +67,11 @@ const Header = ({ setPage, onLogout }) => {
   const handleLogout = async () => {
     setIsProfileOpen(false);
     await onLogout?.();
+  };
+
+  // ✅ Clickable logo → home
+  const handleLogoClick = () => {
+    setPage?.("home");
   };
 
   useEffect(() => {
@@ -63,15 +100,13 @@ const Header = ({ setPage, onLogout }) => {
         const appUserId = userRow.id;
         const displayName = userRow.display_name || authUser.email || "Потребител";
 
-        // ✅ Resolve avatar from DB (avatar_url)
         let avatarUrl = null;
         const rawAvatar = userRow.avatar_url;
 
         if (rawAvatar) {
           if (/^https?:\/\//i.test(rawAvatar)) {
-            avatarUrl = rawAvatar; // full URL
+            avatarUrl = rawAvatar;
           } else {
-            // storage path
             const { data } = supabase.storage.from("avatars").getPublicUrl(rawAvatar);
             avatarUrl = data?.publicUrl || null;
           }
@@ -86,7 +121,6 @@ const Header = ({ setPage, onLogout }) => {
 
         const workouts = workoutsCount ?? 0;
         const workoutsPerLevel = 5;
-
         const level = Math.max(1, 1 + Math.floor(workouts / workoutsPerLevel));
         const withinLevel = workouts % workoutsPerLevel;
         const levelProgressPct = Math.round((withinLevel / workoutsPerLevel) * 100);
@@ -98,13 +132,14 @@ const Header = ({ setPage, onLogout }) => {
 
         if (lErr) throw lErr;
 
+        // ✅ Uses updated streak function — 0 if no workout today
         const streak = calcStreakDaysFromLogs(logs ?? []);
 
         if (!isMounted) return;
 
         setUserStats({
           displayName,
-          avatarUrl, // store base url only (no bust)
+          avatarUrl,
           streak,
           level,
           levelProgressPct,
@@ -113,17 +148,14 @@ const Header = ({ setPage, onLogout }) => {
         if (!isMounted) return;
         setPageError(e?.message || "Неуспешно зареждане на данните в заглавната лента.");
       } finally {
-        if (isMounted && !silent) setLoading(false);
-        if (isMounted && silent) setLoading(false); // ensure first load ends
+        if (isMounted) setLoading(false);
       }
     };
 
     loadHeaderStats();
 
     const onWorkoutSaved = () => loadHeaderStats({ silent: true });
-
     const onProfileSaved = () => {
-      // ✅ change version so avatar URL becomes new
       setAvatarVersion(Date.now());
       loadHeaderStats({ silent: true });
     };
@@ -138,19 +170,16 @@ const Header = ({ setPage, onLogout }) => {
     };
   }, []);
 
-  // close dropdown when clicking outside
   useEffect(() => {
     const onDown = (e) => {
       if (!isProfileOpen) return;
-      const target = e.target;
-      if (target.closest?.(".profile-area")) return;
+      if (e.target.closest?.(".profile-area")) return;
       setIsProfileOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [isProfileOpen]);
 
-  // ✅ final src with cache-bust
   const avatarSrc = useMemo(() => {
     const base = userStats.avatarUrl || DEFAULT_AVATAR;
     return withBust(base, avatarVersion);
@@ -163,15 +192,12 @@ const Header = ({ setPage, onLogout }) => {
         <div className="header-left header-left-profile profile-area">
           <button onClick={() => setIsProfileOpen((v) => !v)} className="profile-chip">
             <img
-              key={avatarSrc} // ✅ forces re-render if url changes
+              key={avatarSrc}
               src={avatarSrc}
               alt="аватар"
               className="profile-avatar"
-              onError={(e) => {
-                e.currentTarget.src = DEFAULT_AVATAR;
-              }}
+              onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
             />
-
             <span className="profile-name">{userStats.displayName}</span>
             <span className="profile-caret">▾</span>
           </button>
@@ -192,10 +218,12 @@ const Header = ({ setPage, onLogout }) => {
           </div>
         </div>
 
-        {/* CENTER */}
+        {/* CENTER — ✅ clickable logo */}
         <div className="header-center">
-          <TrainifyLogo as="div" className="header-logo-text" />
-          <div className="header-logo-tagline">Проследяване на фитнес прогрес</div>
+          <button className="logo-btn" onClick={handleLogoClick} aria-label="Начало">
+            <TrainifyLogo as="div" className="header-logo-text" />
+            <div className="header-logo-tagline">Проследяване на фитнес прогрес</div>
+          </button>
 
           {loading && <p>Зареждане…</p>}
           {pageError && <p style={{ color: "salmon" }}>{pageError}</p>}
@@ -212,27 +240,5 @@ const Header = ({ setPage, onLogout }) => {
     </header>
   );
 };
-
-function calcStreakDaysFromLogs(logs) {
-  const days = new Set((logs || []).map((l) => l?.date).filter(Boolean));
-  let streak = 0;
-
-  const d = new Date();
-  d.setHours(12, 0, 0, 0);
-
-  while (true) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const key = `${y}-${m}-${day}`;
-
-    if (days.has(key)) {
-      streak++;
-      d.setDate(d.getDate() - 1);
-    } else break;
-  }
-
-  return streak;
-}
 
 export default Header;

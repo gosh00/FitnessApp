@@ -3,7 +3,6 @@ import "./Navigation.css";
 
 const Navigation = ({ page, setPage }) => {
   const pages = [
-    { id: "home", label: "Начало" },
     { id: "exercises", label: "Упражнения" },
     { id: "log", label: "Запиши тренировка" },
     { id: "workouts", label: "Поток" },
