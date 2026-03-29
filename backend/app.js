@@ -8,6 +8,7 @@ const foodRoutes = require("./routes/food.routes");
 const authRoutes = require("./routes/auth.routes");
 const workoutsRoutes = require("./routes/workouts.routes");
 const profileRoutes = require("./routes/profile.routes");
+const adminRoutes = require("./routes/admin.routes");
 
 const app = express();
 
@@ -36,5 +37,6 @@ app.use("/api", foodRoutes);
 app.use("/api", authRoutes);
 app.use("/api", workoutsRoutes);
 app.use("/api", profileRoutes);
+app.use("/api", adminRoutes);
 
 module.exports = app;

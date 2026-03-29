@@ -23,7 +23,6 @@ function calcStreakDaysFromLogs(logs) {
   const days = new Set((logs || []).map((l) => l?.date).filter(Boolean));
   const todayKey = getLocalDateKey();
 
-  // ✅ If no log for today → streak is 0
   if (!days.has(todayKey)) return 0;
 
   let streak = 0;
@@ -39,7 +38,9 @@ function calcStreakDaysFromLogs(logs) {
     if (days.has(key)) {
       streak++;
       d.setDate(d.getDate() - 1);
-    } else break;
+    } else {
+      break;
+    }
   }
 
   return streak;
@@ -57,6 +58,7 @@ const Header = ({ setPage, onLogout }) => {
     streak: 0,
     level: 1,
     levelProgressPct: 0,
+    role: "user",
   });
 
   const goToProfile = () => {
@@ -64,12 +66,16 @@ const Header = ({ setPage, onLogout }) => {
     setPage?.("profile");
   };
 
+  const goToAdmin = () => {
+    setIsProfileOpen(false);
+    setPage?.("admin");
+  };
+
   const handleLogout = async () => {
     setIsProfileOpen(false);
     await onLogout?.();
   };
 
-  // ✅ Clickable logo → home
   const handleLogoClick = () => {
     setPage?.("home");
   };
@@ -90,7 +96,7 @@ const Header = ({ setPage, onLogout }) => {
 
         const { data: userRow, error: uErr } = await supabase
           .from("Users")
-          .select("id, auth_id, display_name, avatar_url")
+          .select("id, auth_id, display_name, avatar_url, role")
           .eq("auth_id", authUser.id)
           .maybeSingle();
 
@@ -99,6 +105,7 @@ const Header = ({ setPage, onLogout }) => {
 
         const appUserId = userRow.id;
         const displayName = userRow.display_name || authUser.email || "Потребител";
+        const role = userRow.role || "user";
 
         let avatarUrl = null;
         const rawAvatar = userRow.avatar_url;
@@ -132,7 +139,6 @@ const Header = ({ setPage, onLogout }) => {
 
         if (lErr) throw lErr;
 
-        // ✅ Uses updated streak function — 0 if no workout today
         const streak = calcStreakDaysFromLogs(logs ?? []);
 
         if (!isMounted) return;
@@ -143,6 +149,7 @@ const Header = ({ setPage, onLogout }) => {
           streak,
           level,
           levelProgressPct,
+          role,
         });
       } catch (e) {
         if (!isMounted) return;
@@ -168,7 +175,7 @@ const Header = ({ setPage, onLogout }) => {
       window.removeEventListener("workout_saved", onWorkoutSaved);
       window.removeEventListener("profile_saved", onProfileSaved);
     };
-  }, []);
+  }, [setPage]);
 
   useEffect(() => {
     const onDown = (e) => {
@@ -176,6 +183,7 @@ const Header = ({ setPage, onLogout }) => {
       if (e.target.closest?.(".profile-area")) return;
       setIsProfileOpen(false);
     };
+
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [isProfileOpen]);
@@ -188,7 +196,6 @@ const Header = ({ setPage, onLogout }) => {
   return (
     <header className="header">
       <div className="header-container header-compact">
-        {/* LEFT */}
         <div className="header-left header-left-profile profile-area">
           <button onClick={() => setIsProfileOpen((v) => !v)} className="profile-chip">
             <img
@@ -196,7 +203,9 @@ const Header = ({ setPage, onLogout }) => {
               src={avatarSrc}
               alt="аватар"
               className="profile-avatar"
-              onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
+              onError={(e) => {
+                e.currentTarget.src = DEFAULT_AVATAR;
+              }}
             />
             <span className="profile-name">{userStats.displayName}</span>
             <span className="profile-caret">▾</span>
@@ -205,6 +214,11 @@ const Header = ({ setPage, onLogout }) => {
           {isProfileOpen && (
             <div className="profile-dropdown">
               <button onClick={goToProfile}>👤 Профил</button>
+
+              {userStats.role === "admin" && (
+                <button onClick={goToAdmin}>🛡️ Админ панел</button>
+              )}
+
               <div style={{ height: 1, background: "rgba(0,0,0,0.06)" }} />
               <button onClick={handleLogout}>🚪 Изход</button>
             </div>
@@ -218,7 +232,6 @@ const Header = ({ setPage, onLogout }) => {
           </div>
         </div>
 
-        {/* CENTER — ✅ clickable logo */}
         <div className="header-center">
           <button className="logo-btn" onClick={handleLogoClick} aria-label="Начало">
             <TrainifyLogo as="div" className="header-logo-text" />
@@ -229,7 +242,6 @@ const Header = ({ setPage, onLogout }) => {
           {pageError && <p style={{ color: "salmon" }}>{pageError}</p>}
         </div>
 
-        {/* RIGHT */}
         <div className="header-right header-right-streak">
           <div className={`streak-badge ${userStats.streak > 0 ? "active" : ""}`}>
             <span className="streak-icon">🔥</span>

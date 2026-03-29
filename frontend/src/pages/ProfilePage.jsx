@@ -434,7 +434,7 @@ export default function ProfilePage({ currentUser, onUpdateProfile, setPage }) {
                 onChange={(e) => setDisplayName(e.target.value)}
                 disabled={!editing}
                 className={styles.input}
-                placeholder="Напр. ViliFit"
+                placeholder=""
               />
             </div>
 

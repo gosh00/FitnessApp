@@ -5,6 +5,7 @@ const Navigation = ({ page, setPage }) => {
   const pages = [
     { id: "exercises", label: "Упражнения" },
     { id: "log", label: "Запиши тренировка" },
+    { id: "my-workouts", label: "Моите тренировки" },
     { id: "workouts", label: "Поток" },
     { id: "calories", label: "Калории" },
     { id: "food-diary", label: "Хранителен дневник" },

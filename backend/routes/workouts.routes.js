@@ -2,168 +2,126 @@ const express = require("express");
 const router = express.Router();
 const supabase = require("../config/supabaseClient");
 
-// Create a workout
-router.post("/workouts", async (req, res) => {
-  try {
-    const { user_id, name, exercises, is_public } = req.body;
+async function getAuthUserFromRequest(req) {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.replace("Bearer ", "").trim()
+    : null;
 
-    if (!user_id || !name || !Array.isArray(exercises) || exercises.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "user_id, name and exercises are required" });
-    }
-
-    const data = { exercises };
-
-    const { data: inserted, error } = await supabase
-      .from("Workouts")
-      .insert([{ user_id, name, data, is_public: !!is_public }])
-      .select()
-      .single();
-
-    if (error) return res.status(500).json({ error: error.message });
-
-    res.json(inserted);
-  } catch (err) {
-    console.error("Server error (create workout):", err);
-    res.status(500).json({ error: "Server error" });
+  if (!token) {
+    const error = new Error("Липсва токен за достъп.");
+    error.status = 401;
+    throw error;
   }
-});
 
-// Get workouts visible for a viewer
-router.get("/workouts", async (req, res) => {
+  const { data, error } = await supabase.auth.getUser(token);
+
+  if (error || !data?.user) {
+    const authError = new Error("Невалиден или изтекъл токен.");
+    authError.status = 401;
+    throw authError;
+  }
+
+  return data.user;
+}
+
+async function getAppUserByAuthId(authId) {
+  const { data, error } = await supabase
+    .from("Users")
+    .select("id, auth_id, email, display_name, role")
+    .eq("auth_id", authId)
+    .single();
+
+  if (error || !data) {
+    const appUserError = new Error("Потребителят не е намерен в таблица Users.");
+    appUserError.status = 404;
+    throw appUserError;
+  }
+
+  return data;
+}
+
+// Моите тренировки
+router.get("/workouts/mine", async (req, res) => {
   try {
-    const { viewer_id } = req.query;
+    const authUser = await getAuthUserFromRequest(req);
+    const appUser = await getAppUserByAuthId(authUser.id);
 
-    let query = supabase
+    const { data, error } = await supabase
       .from("Workouts")
       .select("id, user_id, name, data, is_public, created_at, likes_count")
+      .eq("user_id", appUser.id)
       .order("created_at", { ascending: false });
 
-    if (viewer_id) query = query.or(`is_public.eq.true,user_id.eq.${viewer_id}`);
-    else query = query.eq("is_public", true);
-
-    const { data, error } = await query;
-    if (error) return res.status(500).json({ error: error.message });
-
-    res.json(data);
-  } catch (err) {
-    console.error("Server error (list workouts):", err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Like / Unlike (toggle)
-router.post("/workouts/:id/like", async (req, res) => {
-  try {
-    const workoutId = req.params.id;
-    const { user_id } = req.body;
-
-    if (!user_id) return res.status(400).json({ error: "user_id is required" });
-
-    const { data: workout, error: selError } = await supabase
-      .from("Workouts")
-      .select("likes_count")
-      .eq("id", workoutId)
-      .single();
-
-    if (selError) return res.status(500).json({ error: selError.message });
-
-    const currentCount = workout?.likes_count || 0;
-
-    const { data: existingLikes, error: likeSelError } = await supabase
-      .from("WorkoutLikes")
-      .select("id")
-      .eq("workout_id", workoutId)
-      .eq("user_id", user_id)
-      .limit(1);
-
-    if (likeSelError) return res.status(500).json({ error: likeSelError.message });
-
-    const alreadyLiked = existingLikes && existingLikes.length > 0;
-
-    let newCount = currentCount;
-    let likedNow = false;
-
-    if (alreadyLiked) {
-      const likeId = existingLikes[0].id;
-      const { error: delError } = await supabase
-        .from("WorkoutLikes")
-        .delete()
-        .eq("id", likeId);
-
-      if (delError) return res.status(500).json({ error: delError.message });
-
-      newCount = Math.max(0, currentCount - 1);
-      likedNow = false;
-    } else {
-      const { error: insError } = await supabase
-        .from("WorkoutLikes")
-        .insert([{ workout_id: workoutId, user_id }]);
-
-      if (insError) return res.status(500).json({ error: insError.message });
-
-      newCount = currentCount + 1;
-      likedNow = true;
+    if (error) {
+      throw error;
     }
 
-    const { data: updated, error: updError } = await supabase
+    return res.json({
+      workouts: data || [],
+    });
+  } catch (error) {
+    console.error("GET /workouts/mine error:", error);
+    return res.status(error.status || 500).json({
+      message: error.message || "Грешка при зареждане на тренировките.",
+    });
+  }
+});
+
+// Публикуване в потока
+router.patch("/workouts/:id/publish", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const authUser = await getAuthUserFromRequest(req);
+    const appUser = await getAppUserByAuthId(authUser.id);
+
+    const { data: workout, error: workoutError } = await supabase
       .from("Workouts")
-      .update({ likes_count: newCount })
-      .eq("id", workoutId)
-      .select("id, likes_count")
+      .select("id, user_id, name, data, is_public, created_at, likes_count")
+      .eq("id", id)
       .single();
 
-    if (updError) return res.status(500).json({ error: updError.message });
-
-    res.json({ id: updated.id, likes_count: updated.likes_count, liked: likedNow });
-  } catch (err) {
-    console.error("Server error (like workout):", err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Comments
-router.get("/workouts/:id/comments", async (req, res) => {
-  try {
-    const workoutId = req.params.id;
-
-    const { data, error } = await supabase
-      .from("WorkoutComments")
-      .select("*")
-      .eq("workout_id", workoutId)
-      .order("created_at", { ascending: true });
-
-    if (error) return res.status(500).json({ error: error.message });
-
-    res.json(data);
-  } catch (err) {
-    console.error("Server error (get comments):", err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-router.post("/workouts/:id/comments", async (req, res) => {
-  try {
-    const workoutId = req.params.id;
-    const { user_id, content } = req.body;
-
-    if (!user_id || !content || !content.trim()) {
-      return res.status(400).json({ error: "user_id and content are required" });
+    if (workoutError || !workout) {
+      return res.status(404).json({
+        message: "Тренировката не е намерена.",
+      });
     }
 
-    const { data, error } = await supabase
-      .from("WorkoutComments")
-      .insert([{ workout_id: workoutId, user_id, content: content.trim() }])
-      .select()
+    if (workout.user_id !== appUser.id) {
+      return res.status(403).json({
+        message: "Нямаш право да публикуваш тази тренировка.",
+      });
+    }
+
+    if (workout.is_public === true) {
+      return res.status(400).json({
+        message: "Тренировката вече е публикувана.",
+      });
+    }
+
+    const { data: updatedWorkout, error: updateError } = await supabase
+      .from("Workouts")
+      .update({
+        is_public: true,
+      })
+      .eq("id", id)
+      .select("id, user_id, name, data, is_public, created_at, likes_count")
       .single();
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (updateError) {
+      throw updateError;
+    }
 
-    res.json(data);
-  } catch (err) {
-    console.error("Server error (add comment):", err);
-    res.status(500).json({ error: "Server error" });
+    return res.json({
+      message: "Тренировката беше публикувана успешно.",
+      workout: updatedWorkout,
+    });
+  } catch (error) {
+    console.error("PATCH /workouts/:id/publish error:", error);
+    return res.status(error.status || 500).json({
+      message: error.message || "Грешка при публикуване на тренировката.",
+    });
   }
 });
 
