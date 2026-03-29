@@ -20,6 +20,17 @@ function formatDateTime(value) {
   });
 }
 
+function safeNumber(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function safeText(value, fallback = "") {
+  if (typeof value === "string") return value.trim() || fallback;
+  if (typeof value === "number") return String(value);
+  return fallback;
+}
+
 function extractExercisesFromWorkoutData(data) {
   if (!data) return [];
 
@@ -32,6 +43,51 @@ function extractExercisesFromWorkoutData(data) {
   return [];
 }
 
+function normalizeExercise(ex, index) {
+  const exerciseName =
+    safeText(ex?.name) ||
+    safeText(ex?.exercise_name) ||
+    safeText(ex?.title) ||
+    `Упражнение ${index + 1}`;
+
+  let setsCount = 0;
+  let totalReps = 0;
+  let maxWeight = 0;
+  let unit = "кг";
+
+  if (Array.isArray(ex?.sets)) {
+    setsCount = ex.sets.length;
+
+    for (const setItem of ex.sets) {
+      const reps = safeNumber(setItem?.reps);
+      const weight = safeNumber(setItem?.weight);
+
+      totalReps += reps;
+      if (weight > maxWeight) maxWeight = weight;
+
+      if (typeof setItem?.unit === "string" && setItem.unit.trim()) {
+        unit = setItem.unit.trim();
+      }
+    }
+  } else {
+    setsCount = safeNumber(ex?.sets);
+    totalReps = safeNumber(ex?.reps);
+    maxWeight = safeNumber(ex?.weight);
+
+    if (typeof ex?.unit === "string" && ex.unit.trim()) {
+      unit = ex.unit.trim();
+    }
+  }
+
+  return {
+    name: exerciseName,
+    setsCount,
+    totalReps,
+    maxWeight,
+    unit,
+  };
+}
+
 function calculateWorkoutStats(workout) {
   const exercises = extractExercisesFromWorkoutData(workout.data);
 
@@ -39,14 +95,12 @@ function calculateWorkoutStats(workout) {
   let totalSets = 0;
   let totalVolume = 0;
 
-  for (const ex of exercises) {
-    const sets = Number(ex.sets || 0);
-    const reps = Number(ex.reps || 0);
-    const weight = Number(ex.weight || 0);
+  exercises.forEach((ex, index) => {
+    const normalized = normalizeExercise(ex, index);
 
-    totalSets += sets;
-    totalVolume += sets * reps * weight;
-  }
+    totalSets += normalized.setsCount;
+    totalVolume += normalized.totalReps * normalized.maxWeight;
+  });
 
   return {
     totalExercises,
@@ -211,7 +265,7 @@ export default function MyWorkoutsPage() {
                 <div className={styles.cardTop}>
                   <div>
                     <h2 className={styles.cardTitle}>
-                      {workout.name || "Тренировка без име"}
+                      {safeText(workout.name, "Тренировка без име")}
                     </h2>
                     <div className={styles.cardDate}>
                       {formatDateTime(workout.created_at)}
@@ -246,18 +300,23 @@ export default function MyWorkoutsPage() {
 
                 <div className={styles.exerciseList}>
                   {exercises.length === 0 ? (
-                    <div className={styles.emptyText}>Няма данни за упражнения в тази тренировка.</div>
+                    <div className={styles.emptyText}>
+                      Няма данни за упражнения в тази тренировка.
+                    </div>
                   ) : (
-                    exercises.map((ex, index) => (
-                      <div key={`${workout.id}-${index}`} className={styles.exerciseItem}>
-                        <div className={styles.exerciseName}>
-                          {ex.name || ex.exercise_name || `Упражнение ${index + 1}`}
+                    exercises.map((ex, index) => {
+                      const item = normalizeExercise(ex, index);
+
+                      return (
+                        <div key={`${workout.id}-${index}`} className={styles.exerciseItem}>
+                          <div className={styles.exerciseName}>{item.name}</div>
+                          <div className={styles.exerciseMeta}>
+                            {item.setsCount} серии • {item.totalReps} повторения • {item.maxWeight}{" "}
+                            {item.unit}
+                          </div>
                         </div>
-                        <div className={styles.exerciseMeta}>
-                          {ex.sets || 0} серии • {ex.reps || 0} повторения • {ex.weight || 0} кг
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
 
